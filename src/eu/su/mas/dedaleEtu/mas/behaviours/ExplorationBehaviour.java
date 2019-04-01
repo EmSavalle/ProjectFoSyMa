@@ -26,15 +26,11 @@ public class ExplorationBehaviour extends OneShotBehaviour {
 	private String edge;
 	private boolean verbose;
 	//Compteur de tour passé
-	private int cptTour;
-	private int cptAttenteRetour;
 	public FSMAgentData data;
 
 	public ExplorationBehaviour(final AbstractDedaleAgent myagent, FSMAgentData data) {
 		super(myagent);
 		this.edge = "";
-		this.cptTour = 0;
-		this.cptAttenteRetour = 0;
 		this.verbose = false;
 		this.data = data;
 		
@@ -44,9 +40,8 @@ public class ExplorationBehaviour extends OneShotBehaviour {
 	public void action() {
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 
-		this.cptTour++;
 		if (myPosition!=null){
-			if(this.cptTour%2 == 0) {
+			if(this.data.cptTour%2 == 0) {
 				this.data.switchToMsgSending = true;
 			}
 			else {
@@ -60,10 +55,7 @@ public class ExplorationBehaviour extends OneShotBehaviour {
 				this.data.finished=true;
 				System.out.println("Exploration successufully done, behaviour removed.");
 			}else{
-				//4) select next move.
-				//4.1 If there exist one open node directly reachable, go for it,
-				//	 otherwise choose one from the openNode list, compute the shortestPath and go for it
-				if(this.data.destination != myPosition || this.data.destination != "") {	
+				if(this.data.destination == myPosition || this.data.destination == "") {	
 					int iMin=-1;
 					int distMin=0;
 					for (int i = 0 ; i < this.data.openNodes.size() ; i++) {
@@ -73,15 +65,9 @@ public class ExplorationBehaviour extends OneShotBehaviour {
 							distMin = a;
 						}
 					}
+					this.data.setDestination(this.data.openNodes.get(iMin));
 				}
-				String nextNode = null;
-				while (nextNode==null){
-					System.out.println("Null");
-					//no directly accessible openNode
-					//chose one, compute the path and take the first step.
-					nextNode=this.data.myMap.getShortestPath(myPosition, this.data.destination).get(0);
-				}
-				((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
+				this.data.movement();
 			}
 		}
 		done();

@@ -52,43 +52,7 @@ public class myMovementBehaviour extends OneShotBehaviour {
 			else {
 				System.out.println("Not sending ping");
 			}
-			//List of observable from the agent's current position
-			List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this.myAgent).observe();//myPosition
-	
-			/**
-			 * Just added here to let you see what the agent is doing, otherwise he will be too quick
-			 */
-			try {
-				this.myAgent.doWait(500);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			//1) remove the current node from openlist and add it to closedNodes.
-			this.data.addNode(myPosition);
-			this.data.removeNode(myPosition);
-
-			this.data.addNode(myPosition);
-			//this.sendMessage("IN "+myPosition,false,"Explo");
-	
-			//2) get the surrounding nodes and, if not in closedNodes, add them to open nodes.
-			String nextNode=null;
-			Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter=lobs.iterator();
-			while(iter.hasNext()){
-				String nodeId=iter.next().getLeft();
-				if (!this.data.closedNodes.contains(nodeId)){
-					if (!this.data.openNodes.contains(nodeId)){
-						this.data.openNodes.add(nodeId);
-						this.data.addNode(nodeId, MapAttribute.open);
-						this.data.addEdge(myPosition, nodeId);	
-						this.data.addEdge(myPosition,nodeId);
-						//this.sendMessage("LINK "+myPosition+" "+ nodeId,false,"Explo");
-					}else{
-						//the node exist, but not necessarily the edge
-						this.data.addEdge(myPosition, nodeId);
-					}
-					if (nextNode==null) nextNode=nodeId;
-				}
-			}
+			this.data.observation();
 	
 			//3) while openNodes is not empty, continues.
 			if (this.data.openNodes.isEmpty()){
@@ -96,16 +60,8 @@ public class myMovementBehaviour extends OneShotBehaviour {
 				this.data.finished=true;
 				System.out.println("Exploration successufully done, behaviour removed.");
 			}else{
-				//4) select next move.
-				//4.1 If there exist one open node directly reachable, go for it,
-				//	 otherwise choose one from the openNode list, compute the shortestPath and go for it
-				while (nextNode==null){
-					System.out.println("Null");
-					//no directly accessible openNode
-					//chose one, compute the path and take the first step.
-					nextNode=this.data.myMap.getShortestPath(myPosition, this.data.openNodes.get(0)).get(0);
-				}
-				((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
+				this.data.movement();
+				
 			}
 		}
 		done();

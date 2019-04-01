@@ -45,18 +45,11 @@ public class CollectorBehaviour extends OneShotBehaviour {
 	public void action() {
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 
-		this.cptTour++;
 		if (myPosition!=null){
-			if(this.cptTour%2 == 0) {
-				this.data.switchToMsgSending = true;
-			}
-			else {
-				System.out.println("Not sending ping");
-			}
 
 			this.data.observation();
 	
-			if(this.data.destination != myPosition || this.data.destination != "") {	
+			if(this.data.destination == myPosition || this.data.destination == "") {	
 
 				if(this.data.getNbTreasure() != 0) {
 					this.data.setDestination(this.data.getPositionBestTreasureForMe(myPosition, this.data.myBackpackSize, 1));
@@ -91,16 +84,12 @@ public class CollectorBehaviour extends OneShotBehaviour {
 						this.data.setDestination(this.data.siloPosition);
 					}
 				}
+				else {
+					this.data.setDestination(this.data.getPositionBestTreasureForMe(myPosition, this.data.myBackpackSize, 1));
+				}
 			}
 
-			String nextNode = null;
-			while (nextNode==null){
-				System.out.println("Null");
-				//no directly accessible openNode
-				//chose one, compute the path and take the first step.
-				nextNode=this.data.myMap.getShortestPath(myPosition, this.data.destination).get(0);
-			}
-			((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
+			this.data.movement();
 		}
 		done();
 	}
