@@ -32,7 +32,7 @@ public class FSMAgent extends AbstractDedaleAgent {
 
 	private static final long serialVersionUID = -6431752665590433727L;
 	public int cpt=0;
-	public FSMAgentData data = new FSMAgentData("Collector",this.getBackPackFreeSpace(),this);
+	public FSMAgentData data = new FSMAgentData("Explo",/*this.getBackPackFreeSpace()*/10,this);
 
 	/**
 	 * This method is automatically called when "agent".start() is executed.
