@@ -28,7 +28,7 @@ public class FSMAgentData {
 	public ArrayList<String> openNodes;
 	public HashSet<String> closedNodes;
 	public ArrayList<Entry<String,Integer>> lastComms;
-	public ArrayList<Couple<String,Tuple3<String,Integer,Integer>>> treasure;
+	public ArrayList<Couple<String,Tuple3<String,Integer,Long>>> treasure;
 	//TODO ajouter caractéristiques du trésor : quelles capacitées requises, quelles nombre d'agent
 	//(((position),(type,taille,date))
 	public String edge;
@@ -95,7 +95,7 @@ public class FSMAgentData {
 		this.voisin=new ArrayList<String>();
 		this.closedNodes=new HashSet<String>();
 		this.lastComms= new java.util.ArrayList<Entry<String,Integer>>();
-		this.treasure= new java.util.ArrayList<Couple<String,Tuple3<String,Integer,Long>>>();
+		this.treasure= new java.util.ArrayList<Couple<String,Tuple3<String,Integer,Long >>>();
 		this.edge = "";
 		this.myAgent = ag;
 		this.stuckCounter = 0;
@@ -147,7 +147,7 @@ public class FSMAgentData {
 	public int getNbTreasure() {
 		return this.treasure.size();
 	}
-	public Couple<String,Tuple3<String,Integer,Integer>> getTreasure(int i){
+	public Couple<String,Tuple3<String,Integer,Long>> getTreasure(int i){
 		return this.treasure.get(i);
 	}
 	public String getPositionBestTreasureForMe(String myPos , int size, int type) {
