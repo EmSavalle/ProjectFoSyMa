@@ -74,7 +74,15 @@ public class FSMAgent extends AbstractDedaleAgent {
 		fsm.registerTransition("Collect", "Collect", 0);
 		fsm.registerTransition("Map Exchange", "Map Exchange", 0);
 		fsm.registerTransition("Map Exchange","Explo", 1);
-		
+		/*
+		 * Transition :
+		 * Retour onEnd : 
+		 * 0 : pas de changement
+		 * 1 : passage mapExchange
+		 * 2 : passage mode explo
+		 * 3 : passage mode collect
+		 * 4 : passage mode silo
+		 */
 		
 		/***
 		 * MANDATORY TO ALLOW YOUR AGENT TO BE DEPLOYED CORRECTLY

@@ -73,22 +73,23 @@ public class ExplorationBehaviour extends OneShotBehaviour {
 		done();
 	}
 	public int onEnd() {
-		final MessageTemplate msgTemplate = MessageTemplate.MatchPerformative(ACLMessage.INFORM);
+		/*final MessageTemplate msgTemplate = MessageTemplate.MatchPerformative(ACLMessage.INFORM);
 		//System.out.println("End");
 		//2) get the message
 		ACLMessage msg = this.myAgent.receive(msgTemplate);
 		this.data.setMsg( msg);
 		if(msg != null) {
 			return 1;
-		}
+		}*/
+		return this.data.endingFunc();
 		/*if(this.data.switchToMsgSending == true) {
 			return 1;
-		}*/
+		}
 		if(this.data.type=="Collector" && this.data.getNbTreasure() != 0) {
 			return 2;
 		}
 		else {
 			return 0;
-		}
+		}*/
 	}
 }

@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.lang.reflect.Array;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 
@@ -41,7 +42,7 @@ public class FSMAgentData {
 	private boolean verboseMapExchange;
 	private boolean verboseMovement;
 	private boolean verboseObservation;
-	public AID inCommsWith;
+	public List<Entry<AID,String>> inCommsWith;
 	public int cptTour=0;
 	public int cptAttenteRetour=0;
 	public String destination;
@@ -81,7 +82,6 @@ public class FSMAgentData {
 		this.objectiveAttribute = new Couple<String,String>("","");
 		this.actualProtocol = "";
 		this.desiredPosition = "";
-		this.inCommsWith = null;
 		this.siloPosition = "";
 		this.type = type;
 		this.initBackPackSize = 0;
@@ -97,6 +97,7 @@ public class FSMAgentData {
 		this.voisin=new ArrayList<String>();
 		this.closedNodes=new HashSet<String>();
 		this.lastComms= new java.util.ArrayList<Entry<String,Integer>>();
+		this.inCommsWith = new ArrayList<Entry<AID,String>>();
 		this.treasure= new java.util.ArrayList<Couple<String,Tuple3<String,Integer,Long >>>();
 		this.edge = "";
 		this.myAgent = ag;
@@ -334,7 +335,6 @@ public class FSMAgentData {
 		//1) remove the current node from openlist and add it to closedNodes.
 		this.addNode(myPosition);
 		this.removeNode(myPosition);
-		this.cleanOpenNodes();
 	
 		//2) get the surrounding nodes and, if not in closedNodes, add them to open nodes.
 		String nextNode=null;
@@ -363,12 +363,16 @@ public class FSMAgentData {
 				
 			}
 			for(int i = 0 ; i < it.getRight().size() ; i++) {
-				this.setTreasure(nodeId, it.getRight().get(i).getLeft().toString(), it.getRight().get(i).getRight(), LocalTime.now().toNanoOfDay());
+				System.out.println("Treasure");
+				System.out.println(it.getRight().get(i).getLeft().toString());
+				if(it.getRight().get(i).getLeft().toString() != "WIND")
+					this.setTreasure(nodeId, it.getRight().get(i).getLeft().toString(), it.getRight().get(i).getRight(), LocalTime.now().toNanoOfDay());
 			}
 			
 			
 			//TODO ajouter enregistrement des trésors détécter
 		}
+		this.cleanOpenNodes();
 	}
 	
 	public void mapExchangeProtocol() {
@@ -466,7 +470,12 @@ public class FSMAgentData {
 			if(this.verboseMapExchange)
 				System.out.println(this.myAgent.getName() + " : Ack acknowledged");
 			this.inComms = false;
-			this.inCommsWith = null;
+			for( int j = 0 ; j < this.inCommsWith.size() ; j++) {
+				if(this.inCommsWith.get(j).getKey().equals(msg.getSender()) && this.inCommsWith.get(j).getValue().equals("MapExchange")) {
+					System.out.println("AID removed");System.out.println(this.inCommsWith.get(j).getKey());
+					this.inCommsWith.remove(j);
+				}
+			}
 			if(this.type=="explore") {
 				this.destination = this.findDestination();
 			}
@@ -487,11 +496,18 @@ public class FSMAgentData {
 					}
 				}
 			}
-			if(alreadyTold) {
+			boolean alreadyInComm = false;
+			for( int j = 0 ; j < this.inCommsWith.size() ; j++) {
+				if(this.inCommsWith.get(j).getKey().equals(msg.getSender()) && this.inCommsWith.get(j).getValue().equals("MapExchange")) {
+					alreadyInComm = true;
+				}
+			}
+			if(alreadyTold || alreadyInComm) {
 				this.sendMessage("MapExchange ACK", msg.getSender());
 			}
 			else {
 				this.inComms = true;
+				this.inCommsWith.add(new AbstractMap.SimpleEntry<AID,String>(msg.getSender(),"InterBlock"));
 				this.sendMessage("MapExchange ASK", msg.getSender());
 			}
 		}
@@ -643,14 +659,25 @@ public class FSMAgentData {
 			}
 			this.inComms = false;
 			this.actualProtocol = "";
-			this.inCommsWith = null;
+
+			boolean alreadyInComm = false;
+			for( int j = 0 ; j < this.inCommsWith.size() ; j++) {
+				if(this.inCommsWith.get(j).getKey().equals(msg.getSender()) && this.inCommsWith.get(j).getValue().equals("MapExchange")) {
+					System.out.println("AID removed");System.out.println(this.inCommsWith.get(j).getKey());
+					this.inCommsWith.remove(j);
+				}
+			}
 		}
 		else if(parts[0].contains("UPDATE")) {
 			if(this.verboseMapExchange)
 				System.out.println(this.myAgent.getName() + " : Update acknowledged");
 			
-			this.inComms = false;
-			this.inCommsWith = null;
+			this.inComms = false;boolean alreadyInComm = false;
+			for( int j = 0 ; j < this.inCommsWith.size() ; j++) {
+				if(this.inCommsWith.get(j).getKey().equals(msg.getSender()) && this.inCommsWith.get(j).getValue().equals("MapExchange")) {
+					System.out.println("AID removed");System.out.println(this.inCommsWith.get(j).getKey());this.inCommsWith.remove(j);
+				}
+			}
 			this.actualProtocol = "";
 			String[] noeuds = parts[1].split("/");
 			String[] edges = parts[2].split("/");
@@ -692,12 +719,18 @@ public class FSMAgentData {
 		if(parts[0].equals("STUCK")) {
 			System.out.println("Treating stuck");
 			if(parts[1].equals(this.myAgent.getCurrentPosition())) {
-				if(this.inCommsWith ==msg2.getSender()) {
+				boolean alreadyInComm = false;
+				for( int j = 0 ; j < this.inCommsWith.size() ; j++) {
+					if(this.inCommsWith.get(j).getKey().equals(msg2.getSender()) && this.inCommsWith.get(j).getValue().equals("InterBlock")) {
+						alreadyInComm = true;
+					}
+				}
+				if(alreadyInComm) {
 					//already started no need to continue this line of communication
 					System.out.println("Already in comms with "+msg.getSender());
 				}else {
 					this.actualProtocol = "InterBlock";
-					this.inCommsWith = msg2.getSender();
+					this.inCommsWith.add(new AbstractMap.SimpleEntry<AID,String>(msg2.getSender(),"InterBlock"));
 					this.inComms = true;
 					this.sendMessage("InterBlock RSTUCK "+this.desiredPosition, msg2.getSender());
 					
@@ -707,19 +740,29 @@ public class FSMAgentData {
 				
 			}
 		}else if(parts[0].equals("RSTUCK")) {
-			if(this.inCommsWith == msg2.getSender()) {
+			boolean alreadyInComm = false;
+			for( int j = 0 ; j < this.inCommsWith.size() ; j++) {
+				if(this.inCommsWith.get(j).getKey().equals(msg2.getSender()) && this.inCommsWith.get(j).getValue().equals("InterBlock")) {
+					alreadyInComm = true;
+				}
+			}
+			if(alreadyInComm) {
 				//already started no need to continue this line of communication
 				if(this.verboseInterblock) 
 					System.out.println("Already in comms with "+msg.getSender());
 			}else {
 				this.inComms = true;
-				this.inCommsWith = msg2.getSender();
+				this.inCommsWith.add(new AbstractMap.SimpleEntry<AID,String>(msg2.getSender(),"InterBlock"));
 			}
 			String content = "InterBlock OBJECTIVE [";
 			content+=this.objective+","+this.objectiveAttribute.getLeft()+","+this.objectiveAttribute.getRight()+","+Integer.toString(this.vidage)+"] ";
 			content+=this.destination+" ";
-			Object[] a= this.myMap.getShortestPath(this.desiredPosition, this.destination).toArray();
-			this.path =  Arrays.copyOf(a, a.length, String[].class);
+			if(this.desiredPosition.equals(this.destination)) {
+				this.path = new String[] {this.destination};
+			}else {
+				Object[] a= this.myMap.getShortestPath(this.desiredPosition, this.destination).toArray();
+				this.path =  Arrays.copyOf(a, a.length, String[].class);
+			}
 			content+="[";
 			boolean emptyPath = true;
 			for(int i = 0 ; i < this.myMap.getShortestPath(this.desiredPosition, this.destination).size() ; i ++) {
@@ -801,6 +844,11 @@ public class FSMAgentData {
 				this.objectiveAttribute = new Couple<String,String>(objAttr[1],objAttr[2]);
 			}
 		}else if(parts[0].equals("MapExchange")) {
+			for( int j = 0 ; j < this.inCommsWith.size() ; j++) {
+				if(this.inCommsWith.get(j).getKey().equals(msg2.getSender()) && this.inCommsWith.get(j).getValue().equals("InterBlock")) {
+					System.out.println("AID removed");System.out.println(this.inCommsWith.get(j).getKey());this.inCommsWith.remove(j);
+				}
+			}
 			System.out.println("Sending map");
 			msg2.setContent(msg2.getContent().substring(msg2.getContent().indexOf(' ') + 1));
 			this.msg=msg2;
@@ -826,6 +874,12 @@ public class FSMAgentData {
 			if(this.verboseInterblock) 
 				System.out.println("equal obj");
 			if(this.objective.equals("explore")) {
+
+				for( int j = 0 ; j < this.inCommsWith.size() ; j++) {
+					if(this.inCommsWith.get(j).getKey().equals(sender) && this.inCommsWith.get(j).getValue().equals("InterBlock")) {
+						System.out.println("AID removed");System.out.println(this.inCommsWith.get(j).getKey());this.inCommsWith.remove(j);
+					}
+				}
 				this.actualProtocol="MapExchange";
 				if(this.verboseInterblock) 
 					System.out.println("2 explore colliding swapping map");
@@ -836,6 +890,11 @@ public class FSMAgentData {
 			}
 			else if(this.objective.equals("collect")) {
 				if(this.vidage == this.allyVidage && this.vidage == 0) {
+					for( int j = 0 ; j < this.inCommsWith.size() ; j++) {
+						if(this.inCommsWith.get(j).getKey().equals(sender) && this.inCommsWith.get(j).getValue().equals("InterBlock")) {
+							System.out.println("AID removed");System.out.println(this.inCommsWith.get(j).getKey());this.inCommsWith.remove(j);
+						}
+					}
 					//TODO penser a un meilleur moyen qu'echanger les destinations lorsque les deux se bloquant vont chercher un tresor sans le vider
 					this.sendMessage("InterBlock SWAP ["+this.objective+ "," +this.objectiveAttribute.getLeft() +","+this.objectiveAttribute.getRight() +","+Integer.toString(this.vidage)+ "] " + this.destination, sender); 
 					this.setDestination(this.allyDestination);
@@ -845,6 +904,11 @@ public class FSMAgentData {
 					return "Destination SWAP "+this.objective;
 				}
 				else if(this.vidage == this.allyVidage && this.vidage == 1 && this.allyBackPackSpace >= Integer.parseInt(this.objectiveAttribute.getRight()) && this.getBackPackSize() >= Integer.parseInt(this.allyAttributes.getRight())) {
+					for( int j = 0 ; j < this.inCommsWith.size() ; j++) {
+						if(this.inCommsWith.get(j).getKey().equals(sender) && this.inCommsWith.get(j).getValue().equals("InterBlock")) {
+							System.out.println("AID removed");System.out.println(this.inCommsWith.get(j).getKey());this.inCommsWith.remove(j);
+						}
+					}
 					this.sendMessage("InterBlock SWAP ["+this.objective+ "," +this.objectiveAttribute.getLeft() +","+this.objectiveAttribute.getRight() +","+Integer.toString(this.vidage)+ "] " + this.destination, sender);
 					this.setDestination(this.allyDestination);
 					this.objective=this.allyObjective;
@@ -916,12 +980,12 @@ public class FSMAgentData {
 				}
 				if(dist <= dist1) {
 					//Moi qui bouge
-					this.sendMessage("InterBlock WAIT "+noeudActu, this.inCommsWith);
+					this.sendMessage("InterBlock WAIT "+noeudActu, sender);
 					if(this.verboseInterblock) 
 						System.out.println("Wait here while i go at "+noeudActu);
 				}else {
 					//Toi qui bouge
-					this.sendMessage("InterBlock GO " + noeudEvitement1, this.inCommsWith);
+					this.sendMessage("InterBlock GO " + noeudEvitement1, sender);
 					if(this.verboseInterblock) 
 						System.out.println("Go here "+noeudActu);
 				}
@@ -940,8 +1004,16 @@ public class FSMAgentData {
 		if(parts[0].equals("Thanks")){
 			this.actualProtocol="";
 			this.inComms=false;
-			this.inCommsWith = null;
+			for( int j = 0 ; j < this.inCommsWith.size() ; j++) {
+				if(this.inCommsWith.get(j).getKey().equals(msg.getSender()) && this.inCommsWith.get(j).getValue().equals("InterBlock")) {
+					System.out.println("AID removed");System.out.println(this.inCommsWith.get(j).getKey());this.inCommsWith.remove(j);
+				}
+			}
 		}
+		
+	}
+	private void treatMessageForTreasureExchange(ACLMessage msg2) {
+		String[] parts = msg.getContent().substring(msg.getContent().indexOf(' ') + 1).split("\\s+");
 		
 	}
 	public void getMessage() {
@@ -1031,10 +1103,17 @@ public class FSMAgentData {
 			this.cptUntilRestart +=1;
 			if(this.cptUntilRestart > 3) {
 				if(this.myAgent.getCurrentPosition()==this.thanksAt) {
-					this.sendMessage("InterBlockGiveWay Thanks", this.inCommsWith);
+					for(int j = 0 ; j < this.inCommsWith.size() ; j++) {
+						if(this.inCommsWith.get(j).getValue().equals("InterBlock")) {
+							this.sendMessage("InterBlockGiveWay Thanks",this.inCommsWith.get(j).getKey());
+							System.out.println("AID removed");System.out.println(this.inCommsWith.get(j).getKey());
+							this.inCommsWith.remove(j);
+							break;
+						}
+							
+					}
 					this.actualProtocol = "";
 					this.inComms = false;
-					this.inCommsWith = null;
 					this.desiredPosition = this.myMap.getShortestPath(this.myAgent.getCurrentPosition(), this.destination).get(0);
 					((AbstractDedaleAgent)this.myAgent).moveTo(this.desiredPosition);
 				}
@@ -1057,13 +1136,20 @@ public class FSMAgentData {
 			if(this.destination == "" || this.destination == this.myAgent.getCurrentPosition()) {
 				this.destination = this.findDestination();
 			}
+			if(this.destination == "") {
+				if(this.verboseMovement) {
+					System.out.println("Nowhere to go");
+				}
+				return;
+			}
 			if(this.voisin.contains(this.destination)) {
 				nextNode = this.destination;
 			}else {
 				while (nextNode==null || nextNode.equals(this.myAgent.getCurrentPosition())){
-					System.out.println("Boucle");
-					System.out.println(this.myMap.getShortestPath(this.myAgent.getCurrentPosition(), this.destination));
 					nextNode=this.myMap.getShortestPath(this.myAgent.getCurrentPosition(), this.destination).get(0);
+					if(this.myAgent.getCurrentPosition().equals(nextNode)) {
+						nextNode=this.myMap.getShortestPath(this.myAgent.getCurrentPosition(), this.destination).get(1);
+					}
 				}
 			}
 			if(this.verboseMovement) {
@@ -1072,9 +1158,10 @@ public class FSMAgentData {
 				System.out.println(this.destination);
 				System.out.println(this.desiredPosition);
 			}
-
-			this.desiredPosition = nextNode;
-			((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
+			if(!nextNode.equals(this.myAgent.getCurrentPosition())) {
+				this.desiredPosition = nextNode;
+				((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
+			}			
 		}
 	}
 	private String findDestination() {
@@ -1168,4 +1255,27 @@ public class FSMAgentData {
 		}
 		return "";
 	}
+	public int endingFunc() {
+		/*
+		 * Transition :
+		 * Retour onEnd : 
+		 * 0 : pas de changement
+		 * 1 : passage mapExchange
+		 * 2 : passage mode explo
+		 * 3 : passage mode collect
+		 * 4 : passage mode silo
+		 */
+		if(this.switchToMsgSending) {
+			return 1;
+		}else if(this.type == "Explo" || (this.type == "Collect" && this.getNbTreasure() == 0)) {
+			return 2;
+		}else if(this.type == "Collect" && this.getNbTreasure() != 0) {
+			return 3;
+		}else if(this.type == "Silo") {
+			return 4;
+		}else {
+			return 0;
+		}
+	}
+	
 }
