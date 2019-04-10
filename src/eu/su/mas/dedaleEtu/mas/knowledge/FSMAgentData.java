@@ -81,7 +81,6 @@ public class FSMAgentData {
 		System.out.println(args.toString());
 		EntityCharacteristics ec = (EntityCharacteristics) args[0];
 		
-		
 		this.type = ec.getMyEntityType().toString();
 		if(this.type.contains("Collect"))
 			this.type = "Collect";
@@ -109,15 +108,13 @@ public class FSMAgentData {
 		this.actualProtocol = "";
 		this.desiredPosition = "";
 		this.siloPosition = "";
-		//this.type = type;
-		this.objective = "explore";/*
 		if( type.equals("Explo")) {
 			this.objective = "explore";
 		}else if( type.equals("Collect")) {
 			this.objective = "explore";
 		}else if( type.equals("Silo")) {
 			this.objective = "silo";
-		} */
+		} 
 		this.initBackPackSize = 0;
 		this.myBackpackSize=backpack;
 		this.destination = "";
