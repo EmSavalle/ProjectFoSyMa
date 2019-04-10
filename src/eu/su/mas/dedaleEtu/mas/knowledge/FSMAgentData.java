@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.lang.reflect.Array;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
@@ -14,6 +15,7 @@ import java.time.format.DateTimeFormatter;
 import dataStructures.tuple.*;
 import eu.su.mas.dedale.env.EntityCharacteristics;
 import eu.su.mas.dedale.env.Observation;
+import eu.su.mas.dedale.env.mapElements.LockElement.LockType;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
 import jade.core.AID;
@@ -30,7 +32,7 @@ public class FSMAgentData {
 	public ArrayList<String> openNodes;
 	public HashSet<String> closedNodes;
 	public ArrayList<Entry<String,Integer>> lastComms;
-	public ArrayList<Couple<String,Tuple4<String,Integer,Long,Boolean>>> treasure;//TODO ajouter les niveaux d'ouverture requis
+	public ArrayList<Couple<String,Tuple4<String,Integer,Long,Tuple3<Observation,Observation,Observation>>>> treasure;//TODO ajouter les niveaux d'ouverture requis
 	//TODO ajouter caractéristiques du trésor : quelles capacitées requises, quelles nombre d'agent
 	//(((position),(type,taille,date))
 	public String edge;
@@ -72,7 +74,7 @@ public class FSMAgentData {
 	private String thanksAt;
 	private int cptUntilRestart;
 	private ArrayList<String> voisin;
-	private String myExpertise;
+	private Set<Couple<LockType, Integer>> myExpertise;//[<LockPicking, 1>, <Strength, 1>]
 	private int diamondCap;
 	private int goldCap;
 	
@@ -80,7 +82,7 @@ public class FSMAgentData {
 		System.out.println(args.length);
 		System.out.println(args.toString());
 		EntityCharacteristics ec = (EntityCharacteristics) args[0];
-		
+		this.myExpertise = ec.getExpertise();
 		this.type = ec.getMyEntityType().toString();
 		if(this.type.contains("Collect"))
 			this.type = "Collect";
@@ -90,13 +92,6 @@ public class FSMAgentData {
 			this.type = "Explo";
 		this.diamondCap = ec.getDiamondCapacity();
 		this.goldCap = ec.getGoldCapacity();
-		this.myExpertise="";
-		if(this.diamondCap!= -1) {
-			this.myExpertise+="Diamond";
-		}
-		if(this.goldCap!= -1) {
-			this.myExpertise+="Gold";
-		}
 		this.verbose = false;
 		this.verboseEtatAgent = false;
 		this.verboseInterblock = false;
@@ -129,7 +124,7 @@ public class FSMAgentData {
 		this.closedNodes=new HashSet<String>();
 		this.lastComms= new java.util.ArrayList<Entry<String,Integer>>();
 		this.inCommsWith = new ArrayList<Entry<AID,String>>();
-		this.treasure= new java.util.ArrayList<Couple<String,Tuple4<String,Integer,Long,Boolean>>>();
+		this.treasure= new java.util.ArrayList<Couple<String,Tuple4<String,Integer,Long,Tuple3<Observation,Observation,Observation>>>>();
 		this.edge = "";
 		this.myAgent = ag;
 		this.stuckCounter = 0;
@@ -143,20 +138,20 @@ public class FSMAgentData {
 	public void setBackPackSize(int s) {
 		this.myBackpackSize = s;		
 	}
-	public boolean setTreasure(String position, String type, int value , long l,boolean open) {
+	public boolean setTreasure(String position, String type, int value , long l,Tuple3<Observation,Observation,Observation> open) {
 		for(int i = 0 ; i < this.getNbTreasure() ; i ++) {
 			if(this.treasure.get(i).getLeft() == position) {
 				if(this.treasure.get(i).getRight().get_3() > l) {
-					Tuple4<String, Integer, Long,Boolean> v = new Tuple4<String,Integer,Long,Boolean>(type,value,l,open);
-					Couple<String,Tuple4<String,Integer,Long,Boolean>> e = new Couple<String,Tuple4<String,Integer,Long,Boolean>>(position,v);
+					Tuple4<String, Integer, Long,Tuple3<Observation,Observation,Observation>> v = new Tuple4<String,Integer,Long,Tuple3<Observation,Observation,Observation>>(type,value,l,open);
+					Couple<String,Tuple4<String,Integer,Long,Tuple3<Observation,Observation,Observation>>> e = new Couple<String,Tuple4<String,Integer,Long,Tuple3<Observation,Observation,Observation>>>(position,v);
 					this.treasure.set(i, e);
 					return true;
 				}
 				return false;
 			}
 		}
-		Tuple4<String, Integer, Long, Boolean> v = new Tuple4<String,Integer,Long,Boolean>(type,value,l,open);
-		Couple<String,Tuple4<String,Integer,Long,Boolean>> e = new Couple<String,Tuple4<String,Integer,Long,Boolean>>(position,v);
+		Tuple4<String, Integer, Long, Tuple3<Observation,Observation,Observation>> v = new Tuple4<String,Integer,Long,Tuple3<Observation,Observation,Observation>>(type,value,l,open);
+		Couple<String,Tuple4<String,Integer,Long,Tuple3<Observation,Observation,Observation>>> e = new Couple<String,Tuple4<String,Integer,Long,Tuple3<Observation,Observation,Observation>>>(position,v);
 		this.treasure.add(e);
 		return false;
 	}
@@ -181,7 +176,7 @@ public class FSMAgentData {
 	public int getNbTreasure() {
 		return this.treasure.size();
 	}
-	public Couple<String,Tuple4<String,Integer,Long,Boolean>> getTreasure(int i){
+	public Couple<String,Tuple4<String,Integer,Long,Tuple3<Observation,Observation,Observation>>> getTreasure(int i){
 		return this.treasure.get(i);
 	}
 	public String getPositionBestTreasureForMe(String myPos , int size, int type) {
@@ -391,15 +386,11 @@ public class FSMAgentData {
 				}
 				
 			}
-			for(int i = 0 ; i < it.getRight().size() ; i++) {
-				System.out.println("Treasure");
-				System.out.println(it.getRight().get(i).getLeft().toString());
-				if(it.getRight().get(i).getLeft().toString() != "WIND")
-					if(this.myAgent.getCurrentPosition().equals(nodeId)) {
-						this.treatTresureOnMyLocation(nodeId,it.getRight());
-					}
-					this.setTreasure(nodeId, it.getRight().get(i).getLeft().toString(), it.getRight().get(i).getRight(), LocalTime.now().toNanoOfDay(),false);
-			}
+			if(it.getRight().get(i).getLeft().toString() != "WIND")
+				if(this.myAgent.getCurrentPosition().equals(nodeId)) {
+					this.treatTresureOnMyLocation(nodeId,it.getRight());
+				}
+			
 			
 			
 			//TODO ajouter enregistrement des trésors détécter
@@ -1349,9 +1340,43 @@ public class FSMAgentData {
 		}
 	}
 	public void treatTresureOnMyLocation(String nodeId, List<Couple<Observation, Integer>> list) {
-		//5 [<'Gold',95>]
-		if(this.type=="Explo") {
-			
+		//5 [<'Gold',95>, <LockIsOpen, 0>, <LockPicking, 1>, <Strength, 1>]
+		/*Observation lp = list.getRight().get(i).getLeft().LOCKPICKING;
+		Observation s = it.getRight().get(i).getLeft().STRENGH;
+		Observation ls = it.getRight().get(i).getLeft().LOCKSTATUS;
+		this.setTreasure(nodeId, it.getRight().get(i).getLeft().toString(), it.getRight().get(i).getRight(), LocalTime.now().toNanoOfDay(),new Tuple3<Observation,Observation,Observation>(ls,s,lp));
+		*/
+		int lockisopen = 0;
+		int lockpicking = 0;
+		int strength = 0;
+		String type ="";
+		for(int i = 0 ; i < list.size() ; i++) {
+			if(list.get(i).getLeft().toString().equals("Gold"))
+				type = "Gold";
+			if(list.get(i).getLeft().toString().equals("Diamond"))
+				type = "Diamond";
+			if(list.get(i).getLeft().toString().equals("LockIsOpen"))
+				lockisopen = list.get(i).getRight();
+			if(list.get(i).getLeft().toString().equals("LockPicking"))
+				lockpicking = list.get(i).getRight();
+			if(list.get(i).getLeft().toString().equals("Strength"))
+				strength = list.get(i).getRight();
+		}
+		System.out.println("Expertise");
+		Object[] a = this.myExpertise.toArray();
+		int lock = ((Couple<String,Integer>)a[0]).getRight();
+		int str = ((Couple<String,Integer>)a[1]).getRight();
+		
+		
+		if(strength < str && lockpicking < lock) {
+			this.myAgent.openLock(list.get(0).getLeft());
+		}
+		if(this.objective == "collect" && this.destination.equals(this.myAgent.getCurrentPosition())) {
+			if(list.get(0).getRight()>this.myBackpackSize) {
+				this.myBackpackSize =0;
+				this.objective = "vidage";
+			}
+			this.myAgent.pick();//TODO Finir fonction
 		}
 	}
 }
