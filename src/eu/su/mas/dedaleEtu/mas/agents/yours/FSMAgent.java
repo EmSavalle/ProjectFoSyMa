@@ -29,10 +29,9 @@ import jade.lang.acl.ACLMessage;
  */
 
 public class FSMAgent extends AbstractDedaleAgent {
-
+	FSMAgentData data;
 	private static final long serialVersionUID = -6431752665590433727L;
 	public int cpt=0;
-	public FSMAgentData data = new FSMAgentData("Explo",/*this.getBackPackFreeSpace()*/10,this);
 
 	/**
 	 * This method is automatically called when "agent".start() is executed.
@@ -41,10 +40,16 @@ public class FSMAgent extends AbstractDedaleAgent {
 	 *	 		2) add the behaviours
 	 *          
 	 */
+	public FSMAgent() {
+		super();
+		System.out.println("Constructeur");
+	}
 	protected void setup(){
 
 		super.setup();
-		
+
+		Object[] args = getArguments();
+		data = new FSMAgentData(10,this,args);
 
 		List<Behaviour> lb=new ArrayList<Behaviour>();
 		
