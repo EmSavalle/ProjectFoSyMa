@@ -46,6 +46,8 @@ public class FSMAgentData {
 	private boolean verboseMovement;
 	private boolean verboseEtatAgent;
 	private boolean verboseObservation;
+	private boolean verboseCollect;
+	private boolean verboseEtudeTresor;
 	public List<Entry<AID,String>> inCommsWith;
 	public int cptTour=0;
 	public int cptAttenteRetour=0;
@@ -85,6 +87,8 @@ public class FSMAgentData {
 		EntityCharacteristics ec = (EntityCharacteristics) args[0];
 		this.myExpertise = ec.getExpertise();
 		this.type = ec.getMyEntityType().toString();
+		System.out.println("#################################################");
+		System.out.println(this.type);
 		if(this.type.contains("Collect"))
 			this.type = "Collect";
 		if(this.type.contains("Tanker"))
@@ -99,6 +103,8 @@ public class FSMAgentData {
 		this.verboseMapExchange = false;
 		this.verboseMovement = false;
 		this.verboseObservation = false;
+		this.verboseCollect = true;
+		this.verboseEtudeTresor = true;
 		this.vidage = 0;
 		this.objectiveAttribute = new Couple<String,String>("","");
 		this.actualProtocol = "";
@@ -141,6 +147,9 @@ public class FSMAgentData {
 		this.myBackpackSize = s;		
 	}
 	public boolean setTreasure(String position, String type, int value , long l,int lockisopen,int str, int lockStr) {
+		if(this.verboseEtudeTresor) {
+			System.out.println("Ajout trésor");
+		}
 		Tuple3<Integer,Integer,Integer> open = new Tuple3<Integer,Integer,Integer>(lockisopen,lockStr,str);
 		for(int i = 0 ; i < this.getNbTreasure() ; i ++) {
 			if(this.treasure.get(i).getLeft() == position) {
@@ -199,7 +208,7 @@ public class FSMAgentData {
 			for(int i = 0 ; i < this.getNbTreasure() ; i++) {
 				String p = this.treasure.get(i).getLeft();
 				int d = this.dist(myPos, p);
-				if(d < dist || iMin ==-1) {
+				if((d < dist || iMin ==-1) && this.treasure.get(i).getRight().get_2()!= 0){
 					iMin = i;
 					pos = p;
 				}
@@ -1404,6 +1413,8 @@ public class FSMAgentData {
 				}
 			}
 			this.myAgent.pick();//TODO Finir fonction
+			if(this.verboseCollect)
+				System.out.println("Picked");
 		}
 		this.setTreasure(nodeId, type, size, LocalTime.now().toNanoOfDay(), lockisopen,lockpicking,strength);
 	}
