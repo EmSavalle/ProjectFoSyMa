@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="libs/delta/delta-mas.jar"/>
+	<classpathentry kind="lib" path="libs/graphStream/gs-algo-1.3/gs-algo-1.3-javadoc.jar"/>
+	<classpathentry kind="lib" path="libs/graphStream/gs-algo-1.3/gs-algo-1.3-sources.jar"/>
+	<classpathentry kind="lib" path="libs/graphStream/gs-algo-1.3/gs-algo-1.3.jar"/>
+	<classpathentry kind="lib" path="libs/graphStream/gs-core-1.3/gs-core-1.3-javadoc.jar"/>
+	<classpathentry kind="lib" path="libs/graphStream/gs-core-1.3/gs-core-1.3-sources.jar"/>
+	<classpathentry kind="lib" path="libs/graphStream/gs-core-1.3/gs-core-1.3.jar"/>
+	<classpathentry kind="lib" path="libs/graphStream/gs-ui-1.3/gs-ui-1.3-javadoc.jar"/>
+	<classpathentry kind="lib" path="libs/graphStream/gs-ui-1.3/gs-ui-1.3-sources.jar"/>
+	<classpathentry kind="lib" path="libs/graphStream/gs-ui-1.3/gs-ui-1.3.jar"/>
+	<classpathentry kind="lib" path="libs/graphStream/scala-library-2.11.7.jar"/>
+	<classpathentry kind="lib" path="libs/jade/jade.jar"/>
+	<classpathentry kind="lib" path="libs/junit/junit-4.12-javadoc.jar"/>
+	<classpathentry kind="lib" path="libs/junit/junit-4.12-sources.jar"/>
+	<classpathentry kind="lib" path="libs/junit/junit-4.12.jar"/>
+	<classpathentry kind="lib" path="libs/tools/tools.jar"/>
+	<classpathentry kind="lib" path="/home/emile/Desktop/FoSyMa/ProjectFoSyMa/libs/dedale/dedale.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

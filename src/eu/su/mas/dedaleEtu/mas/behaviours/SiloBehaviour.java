@@ -17,20 +17,18 @@ import jade.core.behaviours.SimpleBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 
-public class ExplorationBehaviour extends OneShotBehaviour {
+public class SiloBehaviour extends OneShotBehaviour {
 
 	private static final long serialVersionUID = 8567689731496787661L;
 
 	
 	
-	private String edge;
 	private boolean verbose;
 	//Compteur de tour passé
 	public FSMAgentData data;
 
-	public ExplorationBehaviour(final AbstractDedaleAgent myagent, FSMAgentData data) {
+	public SiloBehaviour(final AbstractDedaleAgent myagent, FSMAgentData data) {
 		super(myagent);
-		this.edge = "";
 		this.verbose = false;
 		this.data = data;
 		
@@ -55,6 +53,18 @@ public class ExplorationBehaviour extends OneShotBehaviour {
 				this.data.finished=true;
 				System.out.println("Exploration successufully done, behaviour removed.");
 			}else{
+				if(this.data.destination == myPosition || this.data.destination == "") {	
+					int iMin=-1;
+					int distMin=0;
+					for (int i = 0 ; i < this.data.openNodes.size() ; i++) {
+						int a = this.data.dist(myPosition,this.data.openNodes.get(i));
+						if(iMin == -1 || a < distMin) {
+							iMin = i;
+							distMin = a;
+						}
+					}
+					this.data.setDestination(this.data.openNodes.get(iMin));
+				}
 				this.data.movement();
 			}
 		}

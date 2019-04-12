@@ -47,7 +47,7 @@ public class CollectorBehaviour extends OneShotBehaviour {
 		if (myPosition!=null){
 
 			this.data.observation();
-	
+			System.out.println("Collector behaviour launched");
 			if(this.data.destination == myPosition || this.data.destination == "") {	
 
 				if(this.data.getNbTreasure() != 0) {

@@ -71,14 +71,27 @@ public class FSMAgent extends AbstractDedaleAgent {
 		fsm.registerFirstState(new ExplorationBehaviour(this,this.data),"Explo");
 		fsm.registerState(new CollectorBehaviour(this,this.data),"Collect");
 		fsm.registerState(new MapExchangeBehaviour(this,data), "Map Exchange");
-		fsm.registerTransition("Explo", "Collect", 2);
-		fsm.registerTransition("Explo", "Map Exchange", 1);
+		//Not switching state
 		fsm.registerTransition("Explo", "Explo", 0);
-		fsm.registerTransition("Collect", "Explo", 2);
-		fsm.registerTransition("Collect", "Map Exchange", 1);
-		fsm.registerTransition("Collect", "Collect", 0);
 		fsm.registerTransition("Map Exchange", "Map Exchange", 0);
-		fsm.registerTransition("Map Exchange","Explo", 1);
+		fsm.registerTransition("Collect", "Collect", 0);
+
+		//Switching to map Exchange
+		fsm.registerTransition("Explo", "Map Exchange", 1);
+		fsm.registerTransition("Map Exchange", "Map Exchange", 1);
+		fsm.registerTransition("Collect", "Map Exchange", 1);
+		
+		//Switching to explo
+		fsm.registerTransition("Explo", "Explo", 2);
+		fsm.registerTransition("Map Exchange", "Explo", 2);
+		fsm.registerTransition("Collect", "Explo", 2);
+		
+		//Switching to Collect
+		fsm.registerTransition("Explo", "Collect", 3);
+		fsm.registerTransition("Map Exchange", "Collect", 3);
+		fsm.registerTransition("Collect", "Collect", 3);
+		
+		//TODO add mode Silo
 		/*
 		 * Transition :
 		 * Retour onEnd : 
