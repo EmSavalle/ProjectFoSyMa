@@ -84,7 +84,6 @@ public class MyExploBehaviour extends SimpleBehaviour {
 		try {
 			Thread.sleep(1000);
 		} catch (InterruptedException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 		/*System.out.println("Au tour de l'agent :"+this.getAgent().getName());

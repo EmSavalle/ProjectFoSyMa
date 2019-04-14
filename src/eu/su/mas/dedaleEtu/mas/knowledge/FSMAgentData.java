@@ -146,7 +146,7 @@ public class FSMAgentData {
 	public void setBackPackSize(int s) {
 		this.myBackpackSize = s;		
 	}
-	public boolean setTreasure(String position, String type, int value , long l,int lockisopen,int str, int lockStr) {
+	public boolean setTreasure(String position, String type, int value , long l,int lockisopen,int lockStr, int str) {
 		if(this.verboseEtudeTresor) {
 			System.out.println("Ajout trésor");
 		}
@@ -198,6 +198,7 @@ public class FSMAgentData {
 		 * 1 : get the closest treasure that i can empty
 		 * 2 : get the best treasure by value
 		 * */
+		//TODO Gerer les coffres fermés
 		if(this.getNbTreasure() == 0) {
 			return "NoTreasure";
 		}
@@ -747,7 +748,7 @@ public class FSMAgentData {
 		 
 	}
 	private void treatMessageForInterBlock(ACLMessage msg2) {
-		//TODO A tester
+		//TODO Ajouter interblock pour ouverture de coffre
 		String[] parts = msg2.getContent().substring(msg2.getContent().indexOf(' ') + 1).split("\\s+");
 		if(this.verboseInterblock==true) {
 			System.out.println("Treating msg for interblock : -"+ msg2.getContent().substring(msg2.getContent().indexOf(' ') + 1)+"-");
@@ -936,7 +937,6 @@ public class FSMAgentData {
 				this.sendMessage("InterBlock MapExchange ASK", sender);
 				this.setDestination("");
 				return "Destination SWAP "+this.objective;
-				//TODO remove incommsWith
 			}
 			else if(this.objective.equals("collect")) {
 				if(this.vidage == this.allyVidage && this.vidage == 0) {
@@ -1063,9 +1063,29 @@ public class FSMAgentData {
 		
 	}
 	private void treatMessageForTreasureExchange(ACLMessage msg2) {
-		String[] parts = msg.getContent().substring(msg.getContent().indexOf(' ') + 1).split("\\s+");
-		
+		String content =msg.getContent().substring(msg.getContent().indexOf(' ') + 1);
+		content= content.substring(msg.getContent().indexOf(' ') + 1);
+		String[] parts = content.split("\\s+");
+		boolean notUpToDate = false;
+		for(int i = 0 ; i < parts.length ; i++) {
+			String tresor = parts[i].substring(1, parts[i].length()-1);
+			String[] valeurs = tresor.split(",");
+			String pos = valeurs[0];
+			String type = valeurs[1];
+			int val = Integer.parseInt(valeurs[2]);
+			Long date = Long.valueOf(valeurs[3]);
+			int open = Integer.parseInt(valeurs[4]);
+			int lock = Integer.parseInt(valeurs[5]);
+			int str = Integer.parseInt(valeurs[6]);
+			if(this.setTreasure(pos, type, val, date, open, lock, str)) {
+				notUpToDate = false;
+			}
+		}
+		if(notUpToDate) {
+			this.sendTreasure(msg2.getSender());
+		}
 	}
+	
 	public void getMessage() {
 		final MessageTemplate msgTemplate = MessageTemplate.MatchPerformative(ACLMessage.INFORM);
 		ACLMessage m = null;
@@ -1099,6 +1119,8 @@ public class FSMAgentData {
 				this.treatMessageForInterBlockGiveWay(this.msg);
 			}else if(parts[0].contains("InterBlockWaiting")) {
 				this.treatMessageForInterBlockWaiting(this.msg);
+			}else if(parts[0].contains("Treasure EXCHANGE")) {
+				this.treatMessageForTreasureExchange(this.msg);
 			}
 			//Map exchange protocol
 			
@@ -1417,5 +1439,44 @@ public class FSMAgentData {
 				System.out.println("Picked");
 		}
 		this.setTreasure(nodeId, type, size, LocalTime.now().toNanoOfDay(), lockisopen,lockpicking,strength);
+	}
+	public void sendTreasure() {
+		//TODO Definir quand envoyer les connaissances des tresors
+		String message = "Treasure EXCHANGE ";
+		for(int i = 0 ; i < this.getNbTreasure() ; i++) {
+			String tresor = "[";
+			Couple<String, Tuple4<String, Integer, Long, Tuple3<Integer, Integer, Integer>>> a = this.getTreasure(i);
+			String pos = a.getLeft();
+			String type = a.getRight().get_1();
+			String val = Integer.toString(a.getRight().get_2());
+			String time = Long.toString(a.getRight().get_3());
+			String open = Integer.toString(a.getRight().get_4().getFirst());
+			String lock = Integer.toString(a.getRight().get_4().getSecond());
+			String str = Integer.toString(a.getRight().get_4().getThird());
+			tresor+=pos+","+type+","+val+","+time+","+open+","+lock+","+str+"] ";
+			message+=tresor;
+		}
+
+		message.substring(0,message.length()-1);
+		this.sendMessage(message, false, "agent");
+	}
+	public void sendTreasure(AID dest) {
+		String message = "Treasure EXCHANGE ";
+		for(int i = 0 ; i < this.getNbTreasure() ; i++) {
+			String tresor = "[";
+			Couple<String, Tuple4<String, Integer, Long, Tuple3<Integer, Integer, Integer>>> a = this.getTreasure(i);
+			String pos = a.getLeft();
+			String type = a.getRight().get_1();
+			String val = Integer.toString(a.getRight().get_2());
+			String time = Long.toString(a.getRight().get_3());
+			String open = Integer.toString(a.getRight().get_4().getFirst());
+			String lock = Integer.toString(a.getRight().get_4().getSecond());
+			String str = Integer.toString(a.getRight().get_4().getThird());
+			tresor+=pos+","+type+","+val+","+time+","+open+","+lock+","+str+"] ";
+			message+=tresor;
+		}
+
+		message.substring(0,message.length()-1);
+		this.sendMessage(message, dest);
 	}
 }
