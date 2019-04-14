@@ -33,6 +33,8 @@ public class FSMAgentData {
 	public HashSet<String> closedNodes;
 	public ArrayList<Entry<String,Integer>> lastComms;
 	public ArrayList<Couple<String,Tuple4<String,Integer,Long,Tuple3<Integer,Integer,Integer>>>> treasure;//TODO ajouter les niveaux d'ouverture requis
+	// [(pos,[type,Value,date,[open,lockstr,str]]),...]
+	public ArrayList<Order> list_order;
 	//TODO ajouter caractéristiques du trésor : quelles capacitées requises, quelles nombre d'agent
 	//(((position),(type,taille,date))
 	public String edge;
