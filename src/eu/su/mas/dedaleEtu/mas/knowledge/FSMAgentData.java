@@ -32,7 +32,7 @@ public class FSMAgentData {
 	public ArrayList<String> openNodes;
 	public HashSet<String> closedNodes;
 	public ArrayList<Entry<String,Integer>> lastComms;
-	public ArrayList<Couple<String,Tuple4<String,Integer,Long,Tuple3<Integer,Integer,Integer>>>> treasure;//TODO ajouter les niveaux d'ouverture requis
+	public ArrayList<Treasure> treasure;//TODO ajouter les niveaux d'ouverture requis
 	// [(pos,[type,Value,date,[open,lockstr,str]]),...]
 	public ArrayList<Order> list_order;
 	//TODO ajouter caractéristiques du trésor : quelles capacitées requises, quelles nombre d'agent
@@ -134,12 +134,13 @@ public class FSMAgentData {
 		this.closedNodes=new HashSet<String>();
 		this.lastComms= new java.util.ArrayList<Entry<String,Integer>>();
 		this.inCommsWith = new ArrayList<Entry<AID,String>>();
-		this.treasure= new java.util.ArrayList<Couple<String,Tuple4<String,Integer,Long,Tuple3<Integer,Integer,Integer>>>>();
+		this.treasure= new java.util.ArrayList<Treasure>();
 		this.edge = "";
 		this.myAgent = ag;
 		this.stuckCounter = 0;
 		this.previousPosition="";
 		this.stuckTreshold = 2;
+		this.list_order = new ArrayList<Order>();
 	}
 	public int getBackPackSize() {
 		return 0;
@@ -154,24 +155,23 @@ public class FSMAgentData {
 		}
 		Tuple3<Integer,Integer,Integer> open = new Tuple3<Integer,Integer,Integer>(lockisopen,lockStr,str);
 		for(int i = 0 ; i < this.getNbTreasure() ; i ++) {
-			if(this.treasure.get(i).getLeft() == position) {
-				if(this.treasure.get(i).getRight().get_3() > l) {
-					Tuple4<String, Integer, Long,Tuple3<Integer,Integer,Integer>> v = new Tuple4<String,Integer,Long,Tuple3<Integer,Integer,Integer>>(type,value,l,open);
-					Couple<String,Tuple4<String,Integer,Long,Tuple3<Integer,Integer,Integer>>> e = new Couple<String,Tuple4<String,Integer,Long,Tuple3<Integer,Integer,Integer>>>(position,v);
-					this.treasure.set(i, e);
+			if(this.treasure.get(i).getPosition() == position) {
+				// [(pos,[type,Value,date,[open,lockstr,str]]),...]
+				if(this.treasure.get(i).getLastSeen() > l) {
+
+					this.treasure.get(i).updateOpen(l, lockisopen);
+					this.treasure.get(i).updateValue(l, value);
 					return true;
 				}
 				return false;
 			}
 		}
-		Tuple4<String, Integer, Long, Tuple3<Integer,Integer,Integer>> v = new Tuple4<String,Integer,Long,Tuple3<Integer,Integer,Integer>>(type,value,l,open);
-		Couple<String,Tuple4<String,Integer,Long,Tuple3<Integer,Integer,Integer>>> e = new Couple<String,Tuple4<String,Integer,Long,Tuple3<Integer,Integer,Integer>>>(position,v);
-		this.treasure.add(e);
+		this.treasure.add(new Treasure(position,type, value,lockisopen, lockStr, str,l));
 		return false;
 	}
 	public boolean verifyTreasure(String myPosition) {
 		for(int i = 0 ; i < this.getNbTreasure() ; i ++) {
-			if(this.treasure.get(i).getLeft() == myPosition) {
+			if(this.treasure.get(i).getPosition() == myPosition) {
 				return true;
 			}
 		}
@@ -179,7 +179,7 @@ public class FSMAgentData {
 	}
 	public boolean deleteTreasure(String pos) {
 		for(int i = 0 ; i < this.getNbTreasure() ; i ++) {
-			if(this.treasure.get(i).getLeft() == pos) {
+			if(this.treasure.get(i).getPosition() == pos) {
 				this.treasure.remove(i);
 				return true;
 			}
@@ -190,7 +190,7 @@ public class FSMAgentData {
 	public int getNbTreasure() {
 		return this.treasure.size();
 	}
-	public Couple<String,Tuple4<String,Integer,Long,Tuple3<Integer,Integer,Integer>>> getTreasure(int i){
+	public Treasure getTreasure(int i){
 		return this.treasure.get(i);
 	}
 	public String getPositionBestTreasureForMe(String myPos , int size, int type) {
@@ -209,9 +209,9 @@ public class FSMAgentData {
 			int dist = -1;
 			String pos = "";
 			for(int i = 0 ; i < this.getNbTreasure() ; i++) {
-				String p = this.treasure.get(i).getLeft();
+				String p = this.treasure.get(i).getPosition();
 				int d = this.dist(myPos, p);
-				if((d < dist || iMin ==-1) && this.treasure.get(i).getRight().get_2()!= 0){
+				if((d < dist || iMin ==-1) && this.treasure.get(i).getValue()!= 0){
 					iMin = i;
 					pos = p;
 				}
@@ -223,16 +223,16 @@ public class FSMAgentData {
 			int dist = -1;
 			String pos = "";
 			for(int i = 0 ; i < this.getNbTreasure() ; i++) {
-				String p = this.treasure.get(i).getLeft();
+				String p = this.treasure.get(i).getPosition();
 				int d = this.dist(myPos, p);
-				if((this.treasure.get(i).getRight().get_2() < size  && d < dist) || iMin ==-1) {
+				if((this.treasure.get(i).getValue() < size  && d < dist) || iMin ==-1) {
 					iMin = i;
 					pos = p;
 				}
 			}
 			if(iMin == -1) {
 				for(int i = 0 ; i < this.getNbTreasure() ; i++) {
-					String p = this.treasure.get(i).getLeft();
+					String p = this.treasure.get(i).getPosition();
 					int d = this.dist(myPos, p);
 					if(d < dist || iMin ==-1) {
 						iMin = i;
@@ -243,7 +243,7 @@ public class FSMAgentData {
 			return pos;
 		}
 		else {
-			return this.treasure.get(0).getLeft();
+			return this.treasure.get(0).getPosition();
 		}
 	}
 	public String getDestination() {
@@ -414,7 +414,7 @@ public class FSMAgentData {
 		}
 		this.cleanOpenNodes();
 	}
-	
+
 	public void mapExchangeProtocol() {
 		//TODO A tester
 		if(this.waitingForResponse == false && this.inComms == false && this.switchToMsgSending == true) {	
@@ -1295,8 +1295,8 @@ public class FSMAgentData {
 				if(nb == 1) {
 					boolean setDest = false;
 					ArrayList<String> v = new ArrayList<String>();
-					for(int i = 0 ; i < this.getNeighbour(this.getTreasure(0).getLeft()).length ; i++) {
-						v.add(this.getNeighbour(this.getTreasure(0).getLeft())[i]);
+					for(int i = 0 ; i < this.getNeighbour(this.getTreasure(0).getPosition()).length ; i++) {
+						v.add(this.getNeighbour(this.getTreasure(0).getPosition())[i]);
 					}
 					String pos="";
 					while(v.size() != 0 || setDest == false) {
@@ -1313,7 +1313,7 @@ public class FSMAgentData {
 					ArrayList<String> spot = new ArrayList<String>();
 					ArrayList<String> treasure = new ArrayList<String>();
 					for(int i = 0 ; i < this.getNbTreasure() ; i++) {
-						treasure.add(this.getTreasure(i).getLeft());
+						treasure.add(this.getTreasure(i).getPosition());
 					}
 					for(int i = 0 ; i < treasure.size() ; i++) {
 						for(int j = 0 ; j < treasure.size() ; i++) {
@@ -1447,14 +1447,14 @@ public class FSMAgentData {
 		String message = "Treasure EXCHANGE ";
 		for(int i = 0 ; i < this.getNbTreasure() ; i++) {
 			String tresor = "[";
-			Couple<String, Tuple4<String, Integer, Long, Tuple3<Integer, Integer, Integer>>> a = this.getTreasure(i);
-			String pos = a.getLeft();
-			String type = a.getRight().get_1();
-			String val = Integer.toString(a.getRight().get_2());
-			String time = Long.toString(a.getRight().get_3());
-			String open = Integer.toString(a.getRight().get_4().getFirst());
-			String lock = Integer.toString(a.getRight().get_4().getSecond());
-			String str = Integer.toString(a.getRight().get_4().getThird());
+			Treasure a = this.getTreasure(i);
+			String pos = a.getPosition();
+			String type = a.getType();
+			String val = Integer.toString(a.getValue());
+			String time = Long.toString(a.getLastSeen());
+			String open = Integer.toString(a.getOpenInt());
+			String lock = Integer.toString(a.getLockStrength());
+			String str = Integer.toString(a.getStrength());
 			tresor+=pos+","+type+","+val+","+time+","+open+","+lock+","+str+"] ";
 			message+=tresor;
 		}
@@ -1466,14 +1466,14 @@ public class FSMAgentData {
 		String message = "Treasure EXCHANGE ";
 		for(int i = 0 ; i < this.getNbTreasure() ; i++) {
 			String tresor = "[";
-			Couple<String, Tuple4<String, Integer, Long, Tuple3<Integer, Integer, Integer>>> a = this.getTreasure(i);
-			String pos = a.getLeft();
-			String type = a.getRight().get_1();
-			String val = Integer.toString(a.getRight().get_2());
-			String time = Long.toString(a.getRight().get_3());
-			String open = Integer.toString(a.getRight().get_4().getFirst());
-			String lock = Integer.toString(a.getRight().get_4().getSecond());
-			String str = Integer.toString(a.getRight().get_4().getThird());
+			Treasure a = this.getTreasure(i);
+			String pos = a.getPosition();
+			String type = a.getType();
+			String val = Integer.toString(a.getValue());
+			String time = Long.toString(a.getLastSeen());
+			String open = Integer.toString(a.getOpenInt());
+			String lock = Integer.toString(a.getLockStrength());
+			String str = Integer.toString(a.getStrength());
 			tresor+=pos+","+type+","+val+","+time+","+open+","+lock+","+str+"] ";
 			message+=tresor;
 		}
@@ -1481,4 +1481,11 @@ public class FSMAgentData {
 		message.substring(0,message.length()-1);
 		this.sendMessage(message, dest);
 	}
+
+
+	//Collab
+	
+	/*public String determineAffectation(AID agentAvailable,String agentType,int lockStr, int str, int gSize, int dSize) {
+		
+	}*/
 }

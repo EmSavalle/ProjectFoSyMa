@@ -27,54 +27,61 @@ import jade.lang.acl.MessageTemplate;
 
 public class Order {
 	public ArrayList<AID> agentDeploye;
-	public String position;
-	public int totalLockStr;
-	public int totalStr;
+	public Treasure treasure;
 	public int lockStrNeeded;
 	public int strNeeded;
-	public int value;
-	public String type;
-	public boolean opened;
-	public boolean emptied;
+	public int valueToPick;
+	public boolean openingStarted;
+	public boolean emptyingStarted;
 	
-	public Order(String p,String t, int v,int initLockStr,int initStr) {
+	public Order(Treasure t) {
 		this.agentDeploye = new ArrayList<AID>();
-		this.position = p;
-		this.type = t;
-		this.value = v;
-		this.totalLockStr = initLockStr;
-		this.lockStrNeeded = initLockStr;
-		this.totalStr = initStr;
-		this.strNeeded = initStr;
-		this.opened = false;
-		this.emptied = false;
+		this.treasure = t;
+		this.lockStrNeeded = t.lockStr;
+		this.strNeeded = t.str;
+		this.valueToPick = t.value;
 	}
 	public void setOpened() {
-		this.opened = true;
+		this.treasure.setOpen();
 	}
 	public void setEmptied() {
-		this.emptied = true;
+		this.treasure.reduceValue(-1);
 	}
 	public boolean isOpen() {
-		return this.opened;
+		return this.treasure.getOpen();
 	}
 	public boolean isEmpty() {
-		return this.emptied;
+		return this.treasure.getEmpty();
 	}
 	public int sizeTreasure() {
-		return this.value;
+		return this.treasure.getValue();
 	}
 	public Couple<Boolean,String> sendAgentOpening(AID agent,int lockStr,int str) {
+		this.openingStarted = true;
 		this.agentDeploye.add(agent);
 		this.lockStrNeeded = Math.min(this.lockStrNeeded - lockStr,0);
 		this.strNeeded = Math.min(this.strNeeded - str,0);
 		if(this.lockStrNeeded == 0 && this.strNeeded == 0) {
-			return new Couple<Boolean,String>(true,this.orderMessage("Open"));
+			return new Couple<Boolean,String>(true,this.orderMessage("Open",true));
 		}
-		return new Couple<Boolean,String>(false,this.orderMessage("Open"));	
+		return new Couple<Boolean,String>(false,this.orderMessage("Open",false));	
+	}
+	public Couple<Boolean,String> sendAgentEmptying(AID agent,int gSize,int dSize) {
+		this.emptyingStarted = true;
+		this.agentDeploye.add(agent);
+		if(this.treasure.type == "Gold") {
+			this.valueToPick = Math.min(0, this.valueToPick-gSize);
+		}else if(this.treasure.type == "Diamond") {
+			this.valueToPick = Math.min(0, this.valueToPick-dSize);
+		}
+		
+		if(this.valueToPick == 0) {
+			return new Couple<Boolean,String>(true,this.orderMessage("Empty",true));
+		}
+		return new Couple<Boolean,String>(false,this.orderMessage("Empty",false));	
 	}
 	
-	public boolean needAgentOpen() {
+	public boolean needAgentForOpening() {
 		if(this.lockStrNeeded == 0 && this.strNeeded == 0) {
 			return false;
 		}
@@ -83,25 +90,41 @@ public class Order {
 	public Couple<Integer,Integer> whatIsNeeded(){
 		return new Couple<Integer,Integer>(this.lockStrNeeded,this.strNeeded);
 	}
-	public String orderMessage(String typeOrder) {
+	public String orderMessage(String typeOrder,boolean end) {
 		//ORDER UNLOCK pos need_other alone lstr str
 		String order = "";
 		if(typeOrder.equals("Open")) {
-			order  = "ORDER UNLOCK "+this.position+" ";
+			order  = "ORDER UNLOCK "+this.treasure.position+" ";
 			if(this.lockStrNeeded == 0 && this.strNeeded == 0) {
 				order+= "0 ";
 			}else {
 				order+= "1 ";
 			}
-			if(this.agentDeploye.size() >1) {
-				order+= "0 ";
-			}else {
-				order+= "1 ";
-			}
-			order+=Integer.toString(this.lockStrNeeded)+" "+Integer.toString(this.strNeeded);
+			order+= Integer.toString(this.agentDeploye.size())+" ";
+			order+=Integer.toString(this.lockStrNeeded)+" "+Integer.toString(this.strNeeded)+" "+ Boolean.toString(end);
 		}else if(typeOrder.equals("Empty")) {
-			order  = "ORDER EMPTY "+this.position;
+			order  = "ORDER EMPTY "+this.treasure.position +" "+ Boolean.toString(end);
 		}
 		return order;
+	}
+	public boolean isHeUsefull(int lStr, int sStr) {
+		if(lStr > 0 && this.lockStrNeeded > 0)
+			return true;
+		if(sStr > 0 && this.strNeeded > 0)
+			return true;
+		return false;
+	}
+	public boolean isHeUsefull(int lStr, int sStr,int gSize, int dSize) {
+		if(this.isOpen() && this.treasure.getValue()>0) {
+			if(this.treasure.getType() == "Gold" && gSize != 0)
+				return true;
+			if(this.treasure.getType() == "Diamond" && dSize != 0)
+				return true;
+		}
+		if(lStr > 0 && this.lockStrNeeded > 0)
+			return true;
+		if(sStr > 0 && this.strNeeded > 0)
+			return true;
+		return false;
 	}
 }
