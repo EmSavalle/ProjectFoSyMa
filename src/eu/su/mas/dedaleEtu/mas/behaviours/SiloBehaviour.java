@@ -39,34 +39,14 @@ public class SiloBehaviour extends OneShotBehaviour {
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 
 		if (myPosition!=null){
-			/*if(this.data.cptTour%2 == 0) {
+			if(this.data.cptTour%20 == 0) {
 				this.data.switchToMsgSending = true;
 			}
-			else {
-				System.out.println("Not sending ping");
-			}*/
 			this.data.observation();
-	
-			//3) while openNodes is not empty, continues.
-			if (this.data.openNodes.isEmpty()){
-				//Explo finished
-				this.data.finished=true;
-				System.out.println("Exploration successufully done, behaviour removed.");
-			}else{
-				if(this.data.destination == myPosition || this.data.destination == "") {	
-					int iMin=-1;
-					int distMin=0;
-					for (int i = 0 ; i < this.data.openNodes.size() ; i++) {
-						int a = this.data.dist(myPosition,this.data.openNodes.get(i));
-						if(iMin == -1 || a < distMin) {
-							iMin = i;
-							distMin = a;
-						}
-					}
-					this.data.setDestination(this.data.openNodes.get(iMin));
-				}
+			if(this.data.getNeighbour(myPosition).length <3 || this.data.cptTour) {
 				this.data.movement();
 			}
+			
 		}
 		done();
 	}

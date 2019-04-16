@@ -62,7 +62,7 @@ public class OrderList {
 			}
 		}
 	}
-	public String agentAffectationOrder(AID agentToAffect, String type, int lStr, int sStr , int gSize, int dSize) {
+	public String agentGetAffectationOrder(AID agentToAffect, String type, int lStr, int sStr , int gSize, int dSize) {
 		int iOrder = -1;
 		if(type.equals("Explo")) {
 			boolean isOrderStarted = false;

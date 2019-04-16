@@ -95,12 +95,12 @@ public class Order {
 		String order = "";
 		if(typeOrder.equals("Open")) {
 			order  = "ORDER UNLOCK "+this.treasure.position+" ";
+			order+= Integer.toString(this.agentDeploye.size()-1)+" ";
 			if(this.lockStrNeeded == 0 && this.strNeeded == 0) {
 				order+= "0 ";
 			}else {
 				order+= "1 ";
 			}
-			order+= Integer.toString(this.agentDeploye.size())+" ";
 			order+=Integer.toString(this.lockStrNeeded)+" "+Integer.toString(this.strNeeded)+" "+ Boolean.toString(end);
 		}else if(typeOrder.equals("Empty")) {
 			order  = "ORDER EMPTY "+this.treasure.position +" "+ Boolean.toString(end);

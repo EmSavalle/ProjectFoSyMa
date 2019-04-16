@@ -34,7 +34,7 @@ public class FSMAgentData {
 	public ArrayList<Entry<String,Integer>> lastComms;
 	public ArrayList<Treasure> treasure;//TODO ajouter les niveaux d'ouverture requis
 	// [(pos,[type,Value,date,[open,lockstr,str]]),...]
-	public ArrayList<Order> list_order;
+	public OrderList list_order;
 	//TODO ajouter caractéristiques du trésor : quelles capacitées requises, quelles nombre d'agent
 	//(((position),(type,taille,date))
 	public String edge;
@@ -60,6 +60,9 @@ public class FSMAgentData {
 	public int myBackpackSize;
 	public String type; //Silo / Explorer / Collector 
 	public String siloPosition;
+	public boolean siloPositionOutdated;
+	private AID siloAID;
+	private long lastSeenSilo;
 	public int initBackPackSize;
 	private AbstractDedaleAgent myAgent;
 	private int stuckCounter;
@@ -82,6 +85,11 @@ public class FSMAgentData {
 	private int diamondCap;
 	private int goldCap;
 	private int sizeTreshold;
+	private boolean executingOrder;
+	private int order_agentnumber;
+	private int order_lstrneeded;
+	private int order_strneeded;
+	private boolean order_startOnArrival;
 	
 	public FSMAgentData(int backpack, AbstractDedaleAgent ag ,Object[] args){
 		System.out.println(args.length);
@@ -112,6 +120,9 @@ public class FSMAgentData {
 		this.actualProtocol = "";
 		this.desiredPosition = "";
 		this.siloPosition = "";
+		this.siloAID = null;
+		this.lastSeenSilo = 0;
+		this.siloPositionOutdated = true;
 		if( type.equals("Explo")) {
 			this.objective = "explore";
 		}else if( type.equals("Collect")) {
@@ -140,7 +151,7 @@ public class FSMAgentData {
 		this.stuckCounter = 0;
 		this.previousPosition="";
 		this.stuckTreshold = 2;
-		this.list_order = new ArrayList<Order>();
+		this.list_order = new OrderList();
 	}
 	public int getBackPackSize() {
 		return 0;
@@ -1045,7 +1056,37 @@ public class FSMAgentData {
 		}
 		return "";
 	}
-
+	private void treatMessageForSilo(ACLMessage msg) {
+		String content =msg.getContent().substring(msg.getContent().indexOf(' ') + 1);
+		String[] parts =content.split(" "); 
+		if(parts[0].contains("?") && this.type.equals("Silo")) {
+			this.sendMessage("SILO HERE "+this.myAgent.getCurrentPosition(), msg.getSender());
+		}else if(parts[0].contains("?") && !this.type.equals("Silo") && !this.siloPositionOutdated) {
+			this.sendMessage("SILO MAYBE "+this.siloPosition+" "+Long.toString(this.lastSeenSilo), msg.getSender());
+		}else if(parts[0].contains("HERE")) {
+			this.siloPosition = parts[1];
+			this.siloAID = msg.getSender();
+			this.lastSeenSilo =  LocalTime.now().toNanoOfDay();
+		}else if(parts[0].contains("MAYBE")){
+			if(Long.parseLong(parts[3])>this.lastSeenSilo || this.siloPositionOutdated) {
+				this.siloPosition = parts[1];
+				this.siloAID = msg.getSender();
+				this.lastSeenSilo = Long.parseLong(parts[3]);
+			}			
+		}else if(parts[0].contains("AVAILABLE") && this.type.equals("Silo")){
+			String type = parts[1];
+			int loStr = Integer.parseInt(parts[2]);
+			int sStr = Integer.parseInt(parts[3]);
+			int gSize = Integer.parseInt(parts[4]);
+			int dSize = Integer.parseInt(parts[5]);
+			String order = this.list_order.agentGetAffectationOrder(msg.getSender(), type, loStr, sStr, gSize, dSize);
+			if(order == "") {
+				this.sendMessage("ORDER NOTHING", msg.getSender());
+			}else {
+				this.sendMessage(this.list_order.agentGetAffectationOrder(msg.getSender(), type, loStr, sStr, gSize, dSize),msg.getSender());
+			}
+		}
+	}
 	private void treatMessageForInterBlockWaiting(ACLMessage msg2) {
 		String[] parts = msg.getContent().substring(msg.getContent().indexOf(' ') + 1).split("\\s+");
 		
@@ -1088,6 +1129,27 @@ public class FSMAgentData {
 		}
 	}
 	
+	private void treatMessageForOrder(ACLMessage msg2) {
+		String content =msg.getContent().substring(msg.getContent().indexOf(' ') + 1);
+		String[] parts =content.split(" "); 
+		if(parts[0].equals("NOTHING")) {
+			//TODO Treat when no order assigned
+		}
+		else if(parts[0].equals("UNLOCK")) {
+			this.executingOrder = true;
+			this.objective = "Unlock";
+			this.destination = parts[1];
+			this.order_agentnumber = Integer.parseInt(parts[2]);
+			this.order_lstrneeded = Integer.parseInt(parts[3]);
+			this.order_strneeded = Integer.parseInt(parts[4]);
+			this.order_startOnArrival = Boolean.parseBoolean(parts[5]);
+		}else if(parts[0].equals("EMPTY")) {
+			this.objective = "Empty";
+			this.destination = parts[1];
+			this.order_startOnArrival = Boolean.parseBoolean(parts[2]);
+			
+		}
+	}
 	public void getMessage() {
 		final MessageTemplate msgTemplate = MessageTemplate.MatchPerformative(ACLMessage.INFORM);
 		ACLMessage m = null;
@@ -1123,6 +1185,10 @@ public class FSMAgentData {
 				this.treatMessageForInterBlockWaiting(this.msg);
 			}else if(parts[0].contains("Treasure EXCHANGE")) {
 				this.treatMessageForTreasureExchange(this.msg);
+			}else if(parts[0].contains("SILO")) {
+				this.treatMessageForSilo(this.msg);
+			}else if(parts[0].contains("ORDER")) {
+				this.treatMessageForOrder(this.msg);
 			}
 			//Map exchange protocol
 			
@@ -1135,6 +1201,9 @@ public class FSMAgentData {
 		if(this.myAgent.getCurrentPosition() == this.previousPosition && this.actualProtocol.equals("")) {
 			this.stuckCounter+=1;
 			System.out.println("Stuck counter : "+Integer.toString(this.stuckCounter));
+			if(this.executingOrder) {
+				//TODO gerer si on est dans la chaine d'ouverture
+			}
 			if(this.stuckCounter > this.stuckTreshold) {
 				System.out.println("#############Stuck#############");
 				return true;
@@ -1172,6 +1241,9 @@ public class FSMAgentData {
 		}*/
 		
 		if(this.detectIfStuck()) {
+			if(this.objective=="Unlock") {
+				//TODO Verifier si on est dans une chaine vers l'objectif
+			}
 			this.startInterBlockProcedure();
 		}
 		this.cptTour++;
@@ -1482,10 +1554,8 @@ public class FSMAgentData {
 		this.sendMessage(message, dest);
 	}
 
-
-	//Collab
+	public void siloSendPosition() {
+		this.sendMessage("HERE "+this.myAgent.getCurrentPosition(), false, "agent");
+	}
 	
-	/*public String determineAffectation(AID agentAvailable,String agentType,int lockStr, int str, int gSize, int dSize) {
-		
-	}*/
 }
