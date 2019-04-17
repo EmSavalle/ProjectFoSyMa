@@ -1,1 +1,1 @@
-http://DESKTOP-BOSR1AL:7778/acc
+http://ppti-14-408-14.ufr-info-p6.jussieu.fr:7778/acc

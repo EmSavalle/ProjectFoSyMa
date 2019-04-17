@@ -23,14 +23,12 @@ public class ExplorationBehaviour extends OneShotBehaviour {
 
 	
 	
-	private String edge;
 	private boolean verbose;
 	//Compteur de tour passé
 	public FSMAgentData data;
 
 	public ExplorationBehaviour(final AbstractDedaleAgent myagent, FSMAgentData data) {
 		super(myagent);
-		this.edge = "";
 		this.verbose = false;
 		this.data = data;
 		

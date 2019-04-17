@@ -43,9 +43,9 @@ public class SiloBehaviour extends OneShotBehaviour {
 				this.data.switchToMsgSending = true;
 			}
 			this.data.observation();
-			if(this.data.getNeighbour(myPosition).length <3 || this.data.cptTour) {
+			//if(this.data.getNeighbour(myPosition).length <3 || this.data.cptTour) {
 				this.data.movement();
-			}
+			//}
 			
 		}
 		done();
