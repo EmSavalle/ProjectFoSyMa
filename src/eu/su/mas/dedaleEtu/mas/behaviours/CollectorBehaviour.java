@@ -39,18 +39,23 @@ public class CollectorBehaviour extends OneShotBehaviour {
 		this.verbose = false;
 		this.data = data;
 	}
-
+	//TODO pb : le collecteur n'arrive pas a récperer un trésor s'il est a coté du tanker
 	@Override
 	public void action() {
+		System.out.println("Collector behaviour launched");
+		if(this.data.verboseCollect) {
+			System.out.println(this.data.myAgent.getName() + " Backpack :"+this.data.myBackpackSize+"/"+this.data.initBackPackSize);
+			System.out.println(this.data.myAgent.getName() + " Backpack :"+this.data.myAgent.getBackPackFreeSpace());
+		}
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 
 		if (myPosition!=null){
-
+			if(this.data.objective.equals("explore") && this.data.getNbTreasureAccessible(this.data.lockpickStrength,this.data.strength)>0)
+				this.data.objective = "collect";
 			this.data.observation();
-			System.out.println("Collector behaviour launched");
-			if(this.data.destination == myPosition || this.data.destination == "") {	
+			if(this.data.destination == "") {	
 
-				if(this.data.getNbTreasure() != 0) {
+				if(this.data.getNbTreasureAccessible(this.data.lockpickStrength,this.data.strength)!= 0) {
 					this.data.setDestination(this.data.getPositionBestTreasureForMe(myPosition, this.data.myBackpackSize, 1));
 				}else if(this.data.myBackpackSize == 0) {
 					if(this.data.siloPosition == "") {
@@ -72,14 +77,25 @@ public class CollectorBehaviour extends OneShotBehaviour {
 			}
 			else if(this.data.destination == myPosition) {
 				this.ag.pick();
+				if(this.data.verboseCollect) {
+					System.out.println(this.data.myAgent.getName() + "Picked");
+				}
+				
 				this.data.setBackPackSize(this.ag.getBackPackFreeSpace());
 				//TODO mise a jour taille sac
+				if(this.data.verboseCollect)
+					System.out.println("Retour Silo");
 				if(this.ag.getBackPackFreeSpace() < this.data.initBackPackSize/4) {
+					this.data.objective = "vidage";
 					//TODO verification fonctionnement retour silo
-					if(this.data.siloPosition == "") {
-						//TODO Find silo
+					if(this.data.siloPosition == "" || this.data.siloPositionOutdated) {
+						if(this.data.verboseCollect)
+							System.out.println("Finding silo");
+						this.data.findSilo();
 					}
 					else {
+						if(this.data.verboseCollect)
+							System.out.println("Comming back to silo");
 						this.data.setDestination(this.data.siloPosition);
 					}
 				}
@@ -93,19 +109,6 @@ public class CollectorBehaviour extends OneShotBehaviour {
 		done();
 	}
 	public int onEnd() {
-		final MessageTemplate msgTemplate = MessageTemplate.MatchPerformative(ACLMessage.INFORM);
-		System.out.println("End");
-		//2) get the message
-		ACLMessage msg = this.myAgent.receive(msgTemplate);
-		this.data.setMsg( msg);
-		if(msg != null) {
-			return 1;
-		}
-		if(this.data.getNbTreasure() == 0) {
-			return 2;
-		}
-		else {
-			return 0;
-		}
+		return this.data.endingFunc();
 	}
 }

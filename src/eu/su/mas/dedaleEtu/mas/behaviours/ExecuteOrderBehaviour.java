@@ -35,5 +35,8 @@ public class ExecuteOrderBehaviour extends OneShotBehaviour {
 		}
 		done();
 	}
+	public int onEnd() {
+		return this.data.endingFunc();
+	}
 
 }

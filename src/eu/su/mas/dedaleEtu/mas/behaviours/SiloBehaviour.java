@@ -42,12 +42,13 @@ public class SiloBehaviour extends OneShotBehaviour {
 			if(this.data.cptTour%20 == 0) {
 				this.data.switchToMsgSending = true;
 			}
+			this.data.getMessage();
 			this.data.observation();
 			//if(this.data.getNeighbour(myPosition).length <3 || this.data.cptTour) {
 				this.data.movement();
 			//}
 			
-		}
+		}//TODO Empecher le tanker de rester sur un tresor
 		done();
 	}
 	public int onEnd() {

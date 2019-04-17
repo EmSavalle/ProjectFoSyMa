@@ -27,23 +27,23 @@ public class FindSiloBehaviour extends OneShotBehaviour {
 	public void action() {
 		// TODO Auto-generated method stub
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
-
+		//TODO Le robot ne se deplace plus en cherchant le silo
 		if (myPosition!=null){
 			this.data.observation();
 			if(this.data.lookingForSilo) {
 				
-				if(this.data.destination.equals(myPosition)) {
-			        Random rand = new Random(); 
-					this.data.destination = this.data.closedNodes.get(rand.nextInt(this.data.closedNodes.size())); 
-				}
+				
 				this.data.askForSilo();
-				this.data.movement();
 			}
-			
+
+			this.data.movement();
 			
 			
 		}
 		done();
+	}
+	public int onEnd() {
+		return this.data.endingFunc();
 	}
 
 }

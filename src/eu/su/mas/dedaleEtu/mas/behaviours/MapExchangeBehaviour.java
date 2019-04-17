@@ -35,11 +35,12 @@ public class MapExchangeBehaviour extends OneShotBehaviour{
 	}
 	@Override
 	public void action() {
+		this.data.switchToMsgSending = false;
 		
 		this.data.mapExchangeProtocol();
 		this.data.getMessage();
 		this.data.movement();
-		if(this.data.inComms == false && this.data.waitingForResponse == false) {
+		if(this.data.waitingForResponse == false) {
 			//System.out.println("Done");
 			done();
 		}
@@ -47,12 +48,6 @@ public class MapExchangeBehaviour extends OneShotBehaviour{
 			
 	}
 	public int onEnd() {
-		//System.out.println("OnEnd");
-		if(this.data.inComms == true || this.data.waitingForResponse == true) {
-			return 0;
-		}
-		else {
-			return 1;
-		}
+		return this.data.endingFunc();
 	}
 }

@@ -1,6 +1,7 @@
 package eu.su.mas.dedaleEtu.mas.agents.yours;
 
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,7 +54,13 @@ public class FSMAgent extends AbstractDedaleAgent {
 		super.setup();
 
 		Object[] args = getArguments();
-		data = new FSMAgentData(10,this,args);
+		try {
+			int a = this.getBackPackFreeSpace();
+			data = new FSMAgentData(this.getBackPackFreeSpace(),this,args);
+		}catch(Exception e) {
+
+				data = new FSMAgentData(1000,this,args);
+		}
 
 		List<Behaviour> lb=new ArrayList<Behaviour>();
 		
@@ -71,7 +78,6 @@ public class FSMAgent extends AbstractDedaleAgent {
 
 		};
 		ACLMessage m = null;
-		//Ajouter echange de message (Depl doit récupérer un message et laisser la main a mapexchange qui analysera ce message et le traitera
 		fsm.registerFirstState(new ExplorationBehaviour(this,this.data),"Explo");
 		fsm.registerState(new CollectorBehaviour(this,this.data),"Collect");
 		fsm.registerState(new MapExchangeBehaviour(this,data), "MapExchange");
@@ -79,6 +85,7 @@ public class FSMAgent extends AbstractDedaleAgent {
 		fsm.registerState(new RetourSiloBehaviour(this,this.data),"Retour");
 		fsm.registerState(new ExecuteOrderBehaviour(this,this.data),"Execute");
 		fsm.registerState(new FindSiloBehaviour(this,this.data),"Find");
+		
 		//Not switching state
 		fsm.registerTransition("Explo", "Explo", 0);
 		fsm.registerTransition("MapExchange", "MapExchange", 0);
@@ -116,13 +123,13 @@ public class FSMAgent extends AbstractDedaleAgent {
 		fsm.registerTransition("Find", "Collect", 3);
 
 		//Switching to Silo
-		fsm.registerTransition("Explo", "Silo", 3);
-		fsm.registerTransition("MapExchange", "Silo", 3);
-		fsm.registerTransition("Collect", "Silo", 3);
-		fsm.registerTransition("Silo", "Silo", 3);
-		fsm.registerTransition("Retour", "Silo", 3);
-		fsm.registerTransition("Execute", "Silo", 3);
-		fsm.registerTransition("Find", "Silo", 3);
+		fsm.registerTransition("Explo", "Silo", 4);
+		fsm.registerTransition("MapExchange", "Silo", 4);
+		fsm.registerTransition("Collect", "Silo", 4);
+		fsm.registerTransition("Silo", "Silo", 4);
+		fsm.registerTransition("Retour", "Silo", 4);
+		fsm.registerTransition("Execute", "Silo", 4);
+		fsm.registerTransition("Find", "Silo", 4);
 		
 		//Switching to Retour
 		fsm.registerTransition("Explo", "Retour", 5);

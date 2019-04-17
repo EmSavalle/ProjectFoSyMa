@@ -20,7 +20,7 @@ public class RetourSiloBehaviour extends OneShotBehaviour {
 		this.data = data;
 		
 	}
-
+	//TODO le robot s'arrète a 2 cases du tanker au lieu d'une seule
 	@Override
 	public void action() {
 		// TODO Auto-generated method stub
@@ -28,15 +28,25 @@ public class RetourSiloBehaviour extends OneShotBehaviour {
 
 		if (myPosition!=null){
 			this.data.observation();
-			if(this.data.siloPositionOutdated || this.data.siloPosition == ""|| this.data.myMap.getShortestPath(myPosition, this.data.siloPosition).size() < 3 || this.data.siloPosition == "") {
+			if(this.data.siloPositionOutdated || (this.data.stuckCounter > 2 && this.data.myMap.getShortestPath(myPosition, this.data.siloPosition).size() < 2) || this.data.siloPosition == "") {
 				this.data.siloPositionOutdated = true;
 				this.data.lookingForSilo = true;
 			}else {
+				if(this.data.myMap.getShortestPath(myPosition, this.data.siloPosition).size() < 2) {
+					if(this.data.siloAID != null) {
+						this.data.sendMessage("SILO EMPTYING", this.data.siloAID);
+					}else {
+						this.data.sendMessage("SILO EMPTYING",false,"");
+					}
+				}
 				this.data.destination=this.data.siloPosition;
 				this.data.movement();
 			}
 		}
 		done();
+	}
+	public int onEnd() {
+		return this.data.endingFunc();
 	}
 
 }

@@ -7,10 +7,16 @@ an 3	label:3
 an 4	label:4
 an 5	label:5
 an 6	label:6
+an 7	label:7
+an 8	label:8
+an 9	label:9
 ae e1	0 1
 ae e2	1 2
 ae e3	2 3
-ae e4	2 6
-ae e5	0 4
-ae e6	4 5
-ae e7	5 6
+ae e4	3 4
+ae e5	4 5
+ae e6	5 6
+ae e7	6 7
+ae e8	7 8
+ae e9	8 9
+ae e10	9 0
