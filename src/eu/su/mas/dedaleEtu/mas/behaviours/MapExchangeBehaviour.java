@@ -35,9 +35,9 @@ public class MapExchangeBehaviour extends OneShotBehaviour{
 	}
 	@Override
 	public void action() {
-		this.data.switchToMsgSending = false;
 		
 		this.data.mapExchangeProtocol();
+		this.data.switchToMsgSending = false;
 		this.data.getMessage();
 		this.data.movement();
 		if(this.data.waitingForResponse == false) {

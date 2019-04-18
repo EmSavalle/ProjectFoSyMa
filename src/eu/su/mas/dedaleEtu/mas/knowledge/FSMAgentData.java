@@ -11,7 +11,7 @@ import java.util.Set;
 import java.lang.reflect.Array;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
-
+//TODO Regler bug recup diam mais pas or
 import dataStructures.tuple.*;
 import eu.su.mas.dedale.env.EntityCharacteristics;
 import eu.su.mas.dedale.env.Observation;
@@ -196,7 +196,7 @@ public class FSMAgentData {
 		this.verbose = false;
 		this.verboseEtatAgent = false;
 		this.verboseInterblock = true;
-		this.verboseMapExchange = false;
+		this.verboseMapExchange = true;
 		this.verboseMovement = true;
 		this.verboseObservation = false;
 		this.verboseCollect = false;
@@ -679,10 +679,11 @@ public class FSMAgentData {
 
 	public void mapExchangeProtocol() {
 		//TODO A tester
+		System.out.println(this.myAgent.getName()+" : " +"cLEAR COMMS "+Boolean.toString(this.inCommsWith.isEmpty()));
 		if(this.waitingForResponse == false && this.inCommsWith.isEmpty() && this.switchToMsgSending == true) {	
 			this.actualProtocol="MapExchange";
-			this.sendMessage("MapExchange PING", false, "Explo");
-			//System.out.println(this.myAgent.getName()+" : " +"Sending ping for map exchange");
+			this.sendMessage("MapExchange PING", false, "");
+			System.out.println(this.myAgent.getName()+" : " +"Sending ping for map exchange");
 			this.waitingForResponse = true;
 			this.cptAttenteRetour=0;
 			this.switchToMsgSending =false;
@@ -773,9 +774,15 @@ public class FSMAgentData {
 			if(this.verboseMapExchange)
 				System.out.println(this.myAgent.getName() + " : Ack acknowledged");
 			for( int j = 0 ; j < this.inCommsWith.size() ; j++) {
+				if(this.verbose) {
+					System.out.println("Comms");
+					System.out.println(this.inCommsWith.get(j).getKey());
+					System.out.println(this.inCommsWith.get(j).getValue());
+				}
 				if(this.inCommsWith.get(j).getKey().equals(msg.getSender()) && this.inCommsWith.get(j).getValue().equals("MapExchange")) {
 					System.out.println(this.myAgent.getName()+" : " +"AID removed");System.out.println(this.myAgent.getName()+" : " +this.inCommsWith.get(j).getKey());
 					this.inCommsWith.remove(j);
+					break;
 				}
 			}
 			if(this.type=="explore") {
@@ -808,7 +815,7 @@ public class FSMAgentData {
 				this.sendMessage("MapExchange ACK", msg.getSender());
 			}
 			else {
-				this.inCommsWith.add(new AbstractMap.SimpleEntry<AID,String>(msg.getSender(),"InterBlock"));
+				this.inCommsWith.add(new AbstractMap.SimpleEntry<AID,String>(msg.getSender(),"MapExchange"));
 				this.sendMessage("MapExchange ASK", msg.getSender());
 			}
 		}
@@ -845,7 +852,7 @@ public class FSMAgentData {
 			if(this.verboseMapExchange)
 				System.out.println(this.myAgent.getName() + " : EXPLORE acknowledged");
 
-			this.inCommsWith.add(new AbstractMap.SimpleEntry<AID,String>(msg.getSender(),"InterBlock"));
+			this.inCommsWith.add(new AbstractMap.SimpleEntry<AID,String>(msg.getSender(),"MapExchange"));
 			if(this.verboseMapExchange)
 				System.out.println(this.myAgent.getName()+" : Received EXPLORE");
 			String content = "EXPLAIN ";
@@ -899,7 +906,7 @@ public class FSMAgentData {
 			if(this.verboseMapExchange)
 				System.out.println(this.myAgent.getName() + " : EXPLORE acknowledged");
 
-			this.inCommsWith.add(new AbstractMap.SimpleEntry<AID,String>(msg.getSender(),"InterBlock"));
+			this.inCommsWith.add(new AbstractMap.SimpleEntry<AID,String>(msg.getSender(),"MapExchange"));
 			if(this.verboseMapExchange)
 				System.out.println(this.myAgent.getName()+" : Received EXPLORE");
 			String content = "UPDATE "+parts[1]+" ";
@@ -963,6 +970,7 @@ public class FSMAgentData {
 				if(this.inCommsWith.get(j).getKey().equals(msg.getSender()) && this.inCommsWith.get(j).getValue().equals("MapExchange")) {
 					System.out.println(this.myAgent.getName()+" : " +"AID removed");System.out.println(this.myAgent.getName()+" : " +this.inCommsWith.get(j).getKey());
 					this.inCommsWith.remove(j);
+					break;
 				}
 			}
 		}
@@ -973,7 +981,10 @@ public class FSMAgentData {
 			boolean alreadyInComm = false;
 			for( int j = 0 ; j < this.inCommsWith.size() ; j++) {
 				if(this.inCommsWith.get(j).getKey().equals(msg.getSender()) && this.inCommsWith.get(j).getValue().equals("MapExchange")) {
-					System.out.println(this.myAgent.getName()+" : " +"AID removed");System.out.println(this.myAgent.getName()+" : " +this.inCommsWith.get(j).getKey());this.inCommsWith.remove(j);
+					System.out.println(this.myAgent.getName()+" : " +"AID removed");
+					System.out.println(this.myAgent.getName()+" : " +this.inCommsWith.get(j).getKey());
+					this.inCommsWith.remove(j);
+					break;
 				}
 			}
 			this.actualProtocol = "";
@@ -1041,6 +1052,7 @@ public class FSMAgentData {
 			for( int j = 0 ; j < this.inCommsWith.size() ; j++) {
 				if(this.inCommsWith.get(j).getKey().equals(msg2.getSender()) && this.inCommsWith.get(j).getValue().equals("InterBlock")) {
 					alreadyInComm = true;
+					break;
 				}
 			}
 			if(alreadyInComm) {
@@ -1156,6 +1168,7 @@ public class FSMAgentData {
 			for( int j = 0 ; j < this.inCommsWith.size() ; j++) {
 				if(this.inCommsWith.get(j).getKey().equals(msg2.getSender()) && this.inCommsWith.get(j).getValue().equals("InterBlock")) {
 					System.out.println(this.myAgent.getName()+" : " +"AID removed");System.out.println(this.myAgent.getName()+" : " +this.inCommsWith.get(j).getKey());this.inCommsWith.remove(j);
+					break;
 				}
 			}
 			System.out.println(this.myAgent.getName()+" : " +"Sending map");
@@ -1164,6 +1177,14 @@ public class FSMAgentData {
 			this.actualProtocol="";
 			this.setDestination("");
 			this.getMessage();
+		}else if(parts[0].equals("GoingElseWhere")) {
+			for( int j = 0 ; j < this.inCommsWith.size() ; j++) {
+				if(this.inCommsWith.get(j).getKey().equals(msg2.getSender()) && this.inCommsWith.get(j).getValue().equals("InterBlock")) {
+					System.out.println(this.myAgent.getName()+" : " +"AID removed");System.out.println(this.myAgent.getName()+" : " +this.inCommsWith.get(j).getKey());this.inCommsWith.remove(j);
+					break;
+				}
+			}
+			this.actualProtocol="";
 		}
 		else {
 			if(this.verboseInterblock) 
@@ -1244,6 +1265,7 @@ public class FSMAgentData {
 			for( int j = 0 ; j < this.inCommsWith.size() ; j++) {
 				if(this.inCommsWith.get(j).getKey().equals(msg.getSender()) && this.inCommsWith.get(j).getValue().equals("InterBlock")) {
 					System.out.println(this.myAgent.getName()+" : " +"AID removed");System.out.println(this.myAgent.getName()+" : " +this.inCommsWith.get(j).getKey());this.inCommsWith.remove(j);
+					break;
 				}
 			}
 		}
@@ -1428,6 +1450,7 @@ public class FSMAgentData {
 				for( int j = 0 ; j < this.inCommsWith.size() ; j++) {
 					if(this.inCommsWith.get(j).getKey().equals(sender) && this.inCommsWith.get(j).getValue().equals("InterBlock")) {
 						System.out.println(this.myAgent.getName()+" : " +"AID removed");System.out.println(this.myAgent.getName()+" : " +this.inCommsWith.get(j).getKey());this.inCommsWith.remove(j);
+						break;
 					}
 				}
 				this.actualProtocol="MapExchange";
@@ -1442,6 +1465,7 @@ public class FSMAgentData {
 					for( int j = 0 ; j < this.inCommsWith.size() ; j++) {
 						if(this.inCommsWith.get(j).getKey().equals(sender) && this.inCommsWith.get(j).getValue().equals("InterBlock")) {
 							System.out.println(this.myAgent.getName()+" : " +"AID removed");System.out.println(this.myAgent.getName()+" : " +this.inCommsWith.get(j).getKey());this.inCommsWith.remove(j);
+							break;
 						}
 					}
 					//TODO penser a un meilleur moyen qu'echanger les destinations lorsque les deux se bloquant vont chercher un tresor sans le vider
@@ -1456,6 +1480,7 @@ public class FSMAgentData {
 					for( int j = 0 ; j < this.inCommsWith.size() ; j++) {
 						if(this.inCommsWith.get(j).getKey().equals(sender) && this.inCommsWith.get(j).getValue().equals("InterBlock")) {
 							System.out.println(this.myAgent.getName()+" : " +"AID removed");System.out.println(this.myAgent.getName()+" : " +this.inCommsWith.get(j).getKey());this.inCommsWith.remove(j);
+							break;
 						}
 					}
 					this.sendMessage("InterBlock SWAP ["+this.objective+ "," +this.objectiveAttribute.getLeft() +","+this.objectiveAttribute.getRight() +","+Integer.toString(this.vidage)+ "] " + this.destination, sender);
@@ -1481,10 +1506,16 @@ public class FSMAgentData {
 				for( int j = 0 ; j < this.inCommsWith.size() ; j++) {
 					if(this.inCommsWith.get(j).getKey().equals(sender) && this.inCommsWith.get(j).getValue().equals("InterBlock")) {
 						System.out.println(this.myAgent.getName()+" : " +"AID removed");System.out.println(this.myAgent.getName()+" : " +this.inCommsWith.get(j).getKey());this.inCommsWith.remove(j);
+						break;
 					}
 				}
 			}
-			this.stuckCounter = 0;
+			this.sendMessage("InterBlock GoingElseWhere", sender);
+			this.stuckCounter = 0;/*
+			if(this.verboseMessage) {
+				System.out.println("ExchangeMap with silo");
+			}
+			this.switchToMsgSending = true;*/
 			
 		}else {
 			if(this.verboseInterblock) 
@@ -1564,6 +1595,15 @@ public class FSMAgentData {
 	public void movement() {
 		this.cleanOpenNodes();
 		//TODO A tester
+		if(this.verboseMessage) {
+			System.out.println(this.myAgent.getName()+" : My comms");
+			for( int j = 0 ; j < this.inCommsWith.size() ; j++) {
+				System.out.println("Comms");
+				System.out.println(this.inCommsWith.get(j).getKey());
+				System.out.println(this.inCommsWith.get(j).getValue());
+				
+			}
+		}
 		if(this.verboseEtatAgent && this.type != "Silo") {
 			System.out.println(this.myAgent.getName()+" : " +"Pre movement recap");
 			System.out.println(this.myAgent.getName()+" : " +"Agent : "+this.myAgent.getName());
@@ -1621,9 +1661,12 @@ public class FSMAgentData {
 				this.desiredPosition = this.myMap.getShortestPath(this.myAgent.getCurrentPosition(), this.giveWayPosition).get(0);
 				((AbstractDedaleAgent)this.myAgent).moveTo(this.desiredPosition);
 			}
-		}else if(this.actualProtocol == "InterBlock" || this.actualProtocol == "MapExchange" || !this.inCommsWith.isEmpty() || this.waitingForResponse){
-			if(this.verboseMovement)
+		}else if(/*this.actualProtocol == "InterBlock" || this.actualProtocol == "MapExchange" ||*/ !this.inCommsWith.isEmpty() || this.waitingForResponse){
+			if(this.verboseMovement) {
 				System.out.println(this.myAgent.getName()+" : Movement GetMessage");
+				System.out.println(this.myAgent.getName()+" : Protocole :"+this.actualProtocol);
+				System.out.println(this.myAgent.getName()+" : In comms? :"+Boolean.toString(this.inCommsWith.isEmpty()));
+			}
 			this.getMessage();
 		}else {
 			String nextNode=null;
@@ -1701,6 +1744,11 @@ public class FSMAgentData {
 		return "";
 	}
 	public int endingFunc() {
+		if(this.type == "Silo") {
+			if(this.verboseFSMBehaviour)
+				System.out.println(this.myAgent.getName()+" : " +"Swapping to Silo");
+			return 4;
+		}
 		/*
 		 * Transition :
 		 * Retour onEnd : 
@@ -1729,10 +1777,7 @@ public class FSMAgentData {
 			if(this.verboseFSMBehaviour)
 				System.out.println(this.myAgent.getName()+" : " +"Swapping to Collect");
 			return 3;
-		}else if(this.type == "Silo") {
-			if(this.verboseFSMBehaviour)
-				System.out.println(this.myAgent.getName()+" : " +"Swapping to Silo");
-			return 4;
+		
 		}else if(this.objective == "vidage" ||this.objective == "RetourSilo") {
 			if(this.verboseFSMBehaviour)
 				System.out.println(this.myAgent.getName()+" : " +"Swapping to Retour Silo");

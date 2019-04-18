@@ -41,11 +41,16 @@ public class CollectorBehaviour extends OneShotBehaviour {
 	//TODO pb : le collecteur n'arrive pas a récperer un trésor s'il est a coté du tanker
 	@Override
 	public void action() {
+		if(this.data.cptTour%20 == 0) {
+			this.data.switchToMsgSending = true;
+		}
+		else {
+			System.out.println("Not sending ping");
+		}
 		this.data.getMessage();
 		System.out.println("Collector behaviour launched");
 		if(this.data.verboseCollect) {
-			System.out.println(this.data.myAgent.getName() + " Backpack :"+this.data.myBackpackSize+"/"+this.data.initBackPackSize);
-			System.out.println(this.data.myAgent.getName() + " Backpack :"+this.data.myAgent.getBackPackFreeSpace());
+			System.out.println(this.data.myAgent.getName() + " Backpack :"+this.data.myAgent.getBackPackFreeSpace()+"/"+this.data.initBackPackSize);
 		}
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 
