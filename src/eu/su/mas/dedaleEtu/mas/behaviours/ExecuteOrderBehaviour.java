@@ -23,7 +23,6 @@ public class ExecuteOrderBehaviour extends OneShotBehaviour {
 
 	@Override
 	public void action() {
-		// TODO Auto-generated method stub
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 
 		if (myPosition!=null){

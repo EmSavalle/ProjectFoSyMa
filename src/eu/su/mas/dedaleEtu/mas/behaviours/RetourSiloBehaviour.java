@@ -23,7 +23,7 @@ public class RetourSiloBehaviour extends OneShotBehaviour {
 	//TODO le robot s'arrète a 2 cases du tanker au lieu d'une seule
 	@Override
 	public void action() {
-		// TODO Auto-generated method stub
+		this.data.getMessage();
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 
 		if (myPosition!=null){
@@ -32,7 +32,10 @@ public class RetourSiloBehaviour extends OneShotBehaviour {
 				this.data.siloPositionOutdated = true;
 				this.data.lookingForSilo = true;
 			}else {
-				if(this.data.myMap.getShortestPath(myPosition, this.data.siloPosition).size() < 2) {
+				if(this.verbose) {
+					System.out.println(this.myAgent.getName()+ ": RetourSiloBehaviour Shortest path "+this.data.siloPosition);
+				}
+				if(this.data.myMap.getShortestPath(myPosition, this.data.siloPosition).size() <= 2) {
 					if(this.data.siloAID != null) {
 						this.data.sendMessage("SILO EMPTYING", this.data.siloAID);
 					}else {

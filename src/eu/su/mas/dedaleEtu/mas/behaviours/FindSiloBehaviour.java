@@ -25,7 +25,7 @@ public class FindSiloBehaviour extends OneShotBehaviour {
 
 	@Override
 	public void action() {
-		// TODO Auto-generated method stub
+		this.data.getMessage();
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 		//TODO Le robot ne se deplace plus en cherchant le silo
 		if (myPosition!=null){

@@ -1,5 +1,7 @@
 package eu.su.mas.dedaleEtu.mas.knowledge;
 
+import eu.su.mas.dedale.env.Observation;
+
 public class Treasure {
 	public String position;
 	public String type;
@@ -9,6 +11,7 @@ public class Treasure {
 	public boolean isEmpty;
 	public int lockStr;
 	public int str;
+	public Observation oType;
 	
 	public Treasure(String p, String t, int v,int open, int lockStr,int str,Long time) {
 		this.position = p;
@@ -28,6 +31,7 @@ public class Treasure {
 		this.lockStr = lockStr;
 		this.str = str;
 	}
+	public Observation getOType() {return this.oType;}
 	public String getPosition() {return this.position;}
 	public String getType() {return this.type;}
 	public int getValue() {return this.value;}
@@ -39,6 +43,9 @@ public class Treasure {
 	public int getStrength() {return this.str;}
 	public void setOpen() {
 		this.isOpen = true;
+	}
+	public boolean canOpen(int lstr,int sstr) {
+		return (lstr>=this.lockStr && sstr >= this.str);
 	}
 	public boolean updateValue(Long time, int v) {
 		if(time < this.lastSeen) {

@@ -197,7 +197,7 @@ public class FSMAgentData {
 		this.verboseEtatAgent = false;
 		this.verboseInterblock = true;
 		this.verboseMapExchange = false;
-		this.verboseMovement = false;
+		this.verboseMovement = true;
 		this.verboseObservation = false;
 		this.verboseCollect = false;
 		this.verboseEtudeTresor = false;
@@ -209,8 +209,10 @@ public class FSMAgentData {
 	
 	//Gestion map
 	public void addNode(String node) {
-		this.myMap.addNode(node);
-		this.closedNodes.add(node);
+		if(!this.closedNodes.contains(node)) {
+			this.myMap.addNode(node);
+			this.closedNodes.add(node);
+		}
 	}
 	public void addNode(String node , MapAttribute m) {
 		if(m== MapAttribute.open) {
@@ -1191,10 +1193,10 @@ public class FSMAgentData {
 		}else if(parts[0].equals("EMPTYING")) {
 			this.sendMessage("SILO EMPTYING_ALLOWED",msg.getSender());
 		}else if(parts[0].equals("EMPTYING_ALLOWED")){
-			boolean empty = this.myAgent.emptyMyBackPack(msg.getSender().getName());
+			boolean empty2 = this.myAgent.emptyMyBackPack("Tanker");
 			if(this.verboseCollect) {
 				System.out.println(this.myAgent.getName()+" : Emptying myself");
-				System.out.println(this.myAgent.getName()+" : Emptying achieve ? : "+Boolean.toString(empty));
+				System.out.println(this.myAgent.getName()+" : Emptying2 achieve ? : "+Boolean.toString(empty2));
 			}
 			this.objective = this.findMyObjective();
 			if(this.verboseCollect) {
@@ -1562,7 +1564,8 @@ public class FSMAgentData {
 	public void movement() {
 		this.cleanOpenNodes();
 		//TODO A tester
-		if(this.verboseEtatAgent) {
+		if(this.verboseEtatAgent && this.type != "Silo") {
+			System.out.println(this.myAgent.getName()+" : " +"Pre movement recap");
 			System.out.println(this.myAgent.getName()+" : " +"Agent : "+this.myAgent.getName());
 			System.out.println(this.myAgent.getName()+" : " +"Destination : " + this.destination);
 			System.out.println(this.myAgent.getName()+" : " +"Protocole  : " + this.actualProtocol);
@@ -1586,6 +1589,8 @@ public class FSMAgentData {
 		}
 		this.cptTour++;
 		if(this.actualProtocol == "InterBlockWaiting") {
+			if(this.verboseMovement)
+				System.out.println(this.myAgent.getName()+" : Movement InterBlockWaiting");
 			this.cptUntilRestart +=1;
 			if(this.cptUntilRestart > 3) {
 				if(this.myAgent.getCurrentPosition()==this.thanksAt) {
@@ -1609,12 +1614,16 @@ public class FSMAgentData {
 				
 			}
 		}else if(this.actualProtocol == "InterBlockGiveWay") {
+			if(this.verboseMovement)
+				System.out.println(this.myAgent.getName()+" : Movement InterBlockGiveWay");
 			if(this.giveWayPosition != this.myAgent.getCurrentPosition()) {
 				//TODO verifier qu'on a toujours une position ou se deplacer
 				this.desiredPosition = this.myMap.getShortestPath(this.myAgent.getCurrentPosition(), this.giveWayPosition).get(0);
 				((AbstractDedaleAgent)this.myAgent).moveTo(this.desiredPosition);
 			}
 		}else if(this.actualProtocol == "InterBlock" || this.actualProtocol == "MapExchange" || !this.inCommsWith.isEmpty() || this.waitingForResponse){
+			if(this.verboseMovement)
+				System.out.println(this.myAgent.getName()+" : Movement GetMessage");
 			this.getMessage();
 		}else {
 			String nextNode=null;
@@ -1630,6 +1639,8 @@ public class FSMAgentData {
 				return;
 			}
 			if(this.voisin.contains(this.destination)) {
+				if(this.verboseMovement)
+					System.out.println(this.myAgent.getName()+" : Movement Neighbour");
 				nextNode = this.destination;
 			}else {
 				while (nextNode==null || nextNode.equals(this.myAgent.getCurrentPosition())){
@@ -1639,13 +1650,8 @@ public class FSMAgentData {
 					}
 				}
 			}
-			if(this.verboseMovement) {
-				System.out.println(this.myAgent.getName()+" : " +"Pre Movement :");
-				System.out.println(this.myAgent.getName()+" : " +this.myAgent.getCurrentPosition());
-				System.out.println(this.myAgent.getName()+" : " +this.destination);
-				System.out.println(this.myAgent.getName()+" : " +this.desiredPosition);
-			}
-			if(this.verboseEtatAgent) {
+			if(this.verboseEtatAgent && this.type != "Silo") {
+				System.out.println(this.myAgent.getName()+" : " +"Pre deplacemennt recap");
 				System.out.println(this.myAgent.getName()+" : " +"Agent : "+this.myAgent.getName());
 				System.out.println(this.myAgent.getName()+" : " +"Destination : " + this.destination);
 				System.out.println(this.myAgent.getName()+" : " +"Protocole  : " + this.actualProtocol);

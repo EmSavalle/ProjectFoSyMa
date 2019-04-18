@@ -32,7 +32,6 @@ public class CollectorBehaviour extends OneShotBehaviour {
 
 	public CollectorBehaviour(final AbstractDedaleAgent myagent, FSMAgentData data) {
 		super(myagent);
-		this.ag = myagent;
 		this.edge = "";
 		this.cptTour = 0;
 		this.cptAttenteRetour = 0;
@@ -42,6 +41,7 @@ public class CollectorBehaviour extends OneShotBehaviour {
 	//TODO pb : le collecteur n'arrive pas a récperer un trésor s'il est a coté du tanker
 	@Override
 	public void action() {
+		this.data.getMessage();
 		System.out.println("Collector behaviour launched");
 		if(this.data.verboseCollect) {
 			System.out.println(this.data.myAgent.getName() + " Backpack :"+this.data.myBackpackSize+"/"+this.data.initBackPackSize);
@@ -76,16 +76,50 @@ public class CollectorBehaviour extends OneShotBehaviour {
 				}
 			}
 			else if(this.data.destination == myPosition) {
-				this.ag.pick();
+				boolean open = false;
+				for(int i = 0 ; i < this.data.getNbTreasure() ; i++) {
+					if(this.data.verboseCollect)
+						System.out.println("Treasure  : "+this.data.getTreasure(i).getPosition());
+					if(this.data.treasure.get(i).getPosition().equals(myPosition)){
+						if(this.data.verboseCollect) 
+							System.out.println(this.data.myAgent.getName() + " : Treasure found Open :" + Boolean.toString(this.data.treasure.get(i).isOpen));
+						if(!this.data.treasure.get(i).isOpen) {
+							if(this.data.treasure.get(i).canOpen(this.data.lockpickStrength, this.data.strength)) {
+								System.out.println(this.data.myAgent.getName() + " : Trying to open Result : "+Boolean.toString(((AbstractDedaleAgent) this.data.myAgent).openLock(this.data.treasure.get(i).getOType())));
+								open = true;
+
+								if(this.data.verboseCollect) {
+									System.out.println(this.data.myAgent.getName() + " : Opened");
+								}
+							}
+						}else {
+							open = true;
+						}
+					}
+				}
+				if(open) {
+					if(this.data.verboseCollect) {
+						System.out.println("Picked : "+((AbstractDedaleAgent) this.data.myAgent).pick());
+					}else {
+						((AbstractDedaleAgent) this.data.myAgent).pick();
+					}
+				}
 				if(this.data.verboseCollect) {
-					System.out.println(this.data.myAgent.getName() + "Picked");
+					System.out.println(this.data.myAgent.getName() + " : Picked");
 				}
 				
-				this.data.setBackPackSize(this.ag.getBackPackFreeSpace());
+				this.data.setBackPackSize(this.data.myAgent.getBackPackFreeSpace());
 				//TODO mise a jour taille sac
-				if(this.data.verboseCollect)
-					System.out.println("Retour Silo");
-				if(this.ag.getBackPackFreeSpace() < this.data.initBackPackSize/4) {
+				if(this.data.verboseCollect) {
+					System.out.println(this.data.myAgent.getName() + " : Retour Silo");
+					System.out.println(this.data.myAgent.getName() + " : Bp : "+this.data.myAgent.getBackPackFreeSpace());
+				}
+				if(this.data.myAgent.getBackPackFreeSpace() < this.data.initBackPackSize/4) {
+					if(this.data.verboseCollect) {
+						System.out.println(this.data.myAgent.getName() + " : Backpack full retour silo");
+						System.out.println(this.data.myAgent.getName() + " : "+this.data.siloPosition);
+						System.out.println(this.data.myAgent.getName() + " : "+Boolean.toString(this.data.siloPositionOutdated));
+					}
 					this.data.objective = "vidage";
 					//TODO verification fonctionnement retour silo
 					if(this.data.siloPosition == "" || this.data.siloPositionOutdated) {
