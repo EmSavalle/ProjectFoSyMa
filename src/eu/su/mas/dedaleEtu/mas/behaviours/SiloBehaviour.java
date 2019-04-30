@@ -39,9 +39,9 @@ public class SiloBehaviour extends OneShotBehaviour {
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 
 		if (myPosition!=null){
-			if(this.data.cptTour%20 == 0) {
+			/*if(this.data.cptTour%20 == 0) {
 				this.data.switchToMsgSending = true;
-			}
+			}*/
 			this.data.getMessage();
 			this.data.observation();
 			//if(this.data.getNeighbour(myPosition).length <3 || this.data.cptTour) {

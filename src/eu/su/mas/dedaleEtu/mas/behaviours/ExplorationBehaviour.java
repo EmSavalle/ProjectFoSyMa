@@ -39,12 +39,12 @@ public class ExplorationBehaviour extends OneShotBehaviour {
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 
 		if (myPosition!=null){
-			if(this.data.cptTour%20 == 0) {
+			/*if(this.data.cptTour%20 == 0) {
 				this.data.switchToMsgSending = true;
 			}
 			else {
 				System.out.println("Not sending ping");
-			}
+			}*/
 			this.data.observation();
 	
 			//3) while openNodes is not empty, continues.
