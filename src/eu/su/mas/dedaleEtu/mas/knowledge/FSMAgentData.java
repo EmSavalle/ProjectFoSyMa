@@ -24,7 +24,7 @@ import jade.domain.FIPAAgentManagement.AMSAgentDescription;
 import jade.domain.FIPAAgentManagement.SearchConstraints;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-
+//TODO Creer a* pour trouver chemin ne passant pas par un lieu
 public class FSMAgentData {
 	//Map var
 	public MapRepresentation myMap;
@@ -34,7 +34,9 @@ public class FSMAgentData {
 	public String edge;
 	public ArrayList<Treasure> treasure;
 	private ArrayList<String> voisin;
+	private boolean treasureNear;
 	public String destination;
+	public boolean exploFinished;
 	
 	//Var comms
 	public ArrayList<Entry<String,Integer>> lastComms;
@@ -98,6 +100,8 @@ public class FSMAgentData {
 	private int order_lstrneeded;
 	private int order_strneeded;
 	private boolean order_startOnArrival;
+	private Observation order_chestType;
+	public String messageForSilo;
 	
 	//Verbose 
 	public boolean verbose;
@@ -112,6 +116,9 @@ public class FSMAgentData {
 	public boolean verboseDebug;
 	public boolean verboseSilo;
 	private boolean verboseMessage;
+	private boolean verboseTreasureExchange;
+	private boolean verboseOrder;
+	private boolean verboseSendMessage;
 	//Int
 	public FSMAgentData(int backpack, AbstractDedaleAgent ag ,Object[] args){
 		//TODO initialiser la liste des agents sur la carte
@@ -157,8 +164,9 @@ public class FSMAgentData {
 		this.destination = "";
 		this.myMap= new MapRepresentation();
 		this.openNodes=new ArrayList<String>();
-		this.voisin=new ArrayList<String>();
 		this.closedNodes=new ArrayList<String>();
+		this.exploFinished = false;
+		this.voisin=new ArrayList<String>();
 		this.lastComms= new java.util.ArrayList<Entry<String,Integer>>();
 		this.inCommsWith = new ArrayList<Entry<AID,String>>();
 		this.treasure= new java.util.ArrayList<Treasure>();
@@ -199,33 +207,41 @@ public class FSMAgentData {
 		this.order_startOnArrival = false;
 		
 		//Verbose
-	/*	if(!this.myAgent.getName().contains("Tanker")) {
+		if(this.myAgent.getName().contains("Tanker")) {
 			this.verbose = false;
 			this.verboseEtatAgent = false;
-			this.verboseInterblock = false;
+			this.verboseInterblock = true;
 			this.verboseMapExchange = false;
 			this.verboseMovement = false;
 			this.verboseObservation = false;
 			this.verboseCollect = false;
-			this.verboseEtudeTresor = false;
+			this.verboseEtudeTresor = true;
 			this.verboseFSMBehaviour = false;
 			this.verboseCollect = false;
 			this.verboseSilo = false;
-			this.verboseMessage=false;
-		}else {*/
+			this.verboseMessage=true;
+			this.verboseFSMBehaviour = false;
+			this.verboseTreasureExchange = false;
+			this.verboseOrder = true;
+			this.verboseSendMessage = true;
+		}else {
 			this.verbose = false;
 			this.verboseEtatAgent = true;
 			this.verboseInterblock = true;
-			this.verboseMapExchange = true;
-			this.verboseMovement = true;
-			this.verboseObservation = false;
-			this.verboseCollect = false;
-			this.verboseEtudeTresor = false;
+			this.verboseMapExchange = false;
+			this.verboseMovement = false;
+			this.verboseObservation = true;
+			this.verboseCollect = true;
+			this.verboseEtudeTresor = true;
 			this.verboseFSMBehaviour = true;
 			this.verboseCollect = true;
 			this.verboseSilo = true;
 			this.verboseMessage=true;
-		//}
+			this.verboseFSMBehaviour = true;
+			this.verboseTreasureExchange = true;
+			this.verboseOrder = true;
+			this.verboseSendMessage = true;
+		}
 	}
 	
 	//Gestion map
@@ -365,6 +381,7 @@ public class FSMAgentData {
 		String nextNode=null;
 		Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter=lobs.iterator();
 		this.voisin.clear();
+		this.treasureNear = false;
 		//this.voisin = new ArrayList<String>();
 		if(this.verboseObservation)
 			System.out.println(this.myAgent.getName()+" : " +"I see : ");
@@ -388,6 +405,7 @@ public class FSMAgentData {
 			if(!it.getRight().isEmpty()) {
 				
 				if(it.getRight().get(0).getLeft().toString() != "WIND")
+					this.treasureNear = true;
 					if(this.myAgent.getCurrentPosition().equals(nodeId)) {
 						this.treatTresureOnMyLocation(nodeId,it.getRight());
 					}
@@ -454,7 +472,7 @@ public class FSMAgentData {
 						treasure.add(this.getTreasure(i).getPosition());
 					}
 					for(int i = 0 ; i < treasure.size() ; i++) {
-						for(int j = 0 ; j < treasure.size() ; i++) {
+						for(int j = 0 ; j < treasure.size() ; j++) {
 							List<String> ch = this.myMap.getShortestPath(treasure.get(i), treasure.get(j));
 							for(int k = 0 ; k < ch.size() ; k++) {
 								if(this.getNeighbour(ch.get(k)).size() > 2) {
@@ -475,6 +493,8 @@ public class FSMAgentData {
 							dMin = d;
 						}
 					}
+					if(iMin == -1)
+						return "";
 					return spot.get(iMin);
 				}
 			}else {
@@ -646,13 +666,14 @@ public class FSMAgentData {
 			if(list.get(i).getLeft().toString().equals("Strength"))
 				strength = list.get(i).getRight();
 		}
-		System.out.println(this.myAgent.getName()+" : " +"Expertise");
 		Object[] a = this.myExpertise.toArray();
 		int lock = ((Couple<String,Integer>)a[0]).getRight();
 		int str = ((Couple<String,Integer>)a[1]).getRight();
 		
 		
 		if(lockisopen == 0 && strength < str && lockpicking < lock) {
+			if(this.verboseEtudeTresor)
+				System.out.println(this.myAgent.getName()+" : " +"A ouvert un coffre");
 			this.myAgent.openLock(list.get(0).getLeft());
 			lockisopen = 1;
 		}
@@ -678,42 +699,46 @@ public class FSMAgentData {
 	}
 	public void sendTreasure() {
 		//TODO Definir quand envoyer les connaissances des tresors
-		String message = "Treasure EXCHANGE ";
-		for(int i = 0 ; i < this.getNbTreasure() ; i++) {
-			String tresor = "[";
-			Treasure a = this.getTreasure(i);
-			String pos = a.getPosition();
-			String type = a.getType();
-			String val = Integer.toString(a.getValue());
-			String time = Long.toString(a.getLastSeen());
-			String open = Integer.toString(a.getOpenInt());
-			String lock = Integer.toString(a.getLockStrength());
-			String str = Integer.toString(a.getStrength());
-			tresor+=pos+","+type+","+val+","+time+","+open+","+lock+","+str+"] ";
-			message+=tresor;
+		if(this.getNbTreasure() != 0) {
+			String message = "Treasure EXCHANGE ";
+			for(int i = 0 ; i < this.getNbTreasure() ; i++) {
+				String tresor = "[";
+				Treasure a = this.getTreasure(i);
+				String pos = a.getPosition();
+				String type = a.getType();
+				String val = Integer.toString(a.getValue());
+				String time = Long.toString(a.getLastSeen());
+				String open = Integer.toString(a.getOpenInt());
+				String lock = Integer.toString(a.getLockStrength());
+				String str = Integer.toString(a.getStrength());
+				tresor+=pos+","+type+","+val+","+time+","+open+","+lock+","+str+"] ";
+				message+=tresor;
+			}
+	
+			message.substring(0,message.length()-1);
+			this.sendMessage(message, false, "");
 		}
-
-		message.substring(0,message.length()-1);
-		this.sendMessage(message, false, "");
 	}
 	public void sendTreasure(AID dest) {
-		String message = "Treasure EXCHANGE ";
-		for(int i = 0 ; i < this.getNbTreasure() ; i++) {
-			String tresor = "[";
-			Treasure a = this.getTreasure(i);
-			String pos = a.getPosition();
-			String type = a.getType();
-			String val = Integer.toString(a.getValue());
-			String time = Long.toString(a.getLastSeen());
-			String open = Integer.toString(a.getOpenInt());
-			String lock = Integer.toString(a.getLockStrength());
-			String str = Integer.toString(a.getStrength());
-			tresor+=pos+","+type+","+val+","+time+","+open+","+lock+","+str+"] ";
-			message+=tresor;
+		if(this.getNbTreasure() != 0) {
+			String message = "Treasure EXCHANGE ";
+			for(int i = 0 ; i < this.getNbTreasure() ; i++) {
+				String tresor = "[";
+				Treasure a = this.getTreasure(i);
+				String pos = a.getPosition();
+				String type = a.getType();
+				String val = Integer.toString(a.getValue());
+				String time = Long.toString(a.getLastSeen());
+				String open = Integer.toString(a.getOpenInt());
+				String lock = Integer.toString(a.getLockStrength());
+				String str = Integer.toString(a.getStrength());
+				tresor+=pos+","+type+","+val+","+time+","+open+","+lock+","+str+"] ";
+				message+=tresor;
+			}
+	
+			message.substring(0,message.length()-1);
+			this.sendMessage(message, dest);
 		}
-
-		message.substring(0,message.length()-1);
-		this.sendMessage(message, dest);
 	}
 	
 	
@@ -823,7 +848,8 @@ public class FSMAgentData {
 		//2° compute the random value		
 		msg.setContent(content);
 		((AbstractDedaleAgent) this.myAgent).sendMessage(msg);
-		System.out.println(this.myAgent.getName()+ ": "+content);
+		if(this.verboseSendMessage)
+			System.out.println(this.myAgent.getName()+ "Send message : "+content);
 			
 		
 	}
@@ -852,6 +878,12 @@ public class FSMAgentData {
 			
 			Entry<String,Integer> pair1=new AbstractMap.SimpleEntry<String,Integer>(msg.getSender().getName(),this.cptTour);
 			this.lastComms.add(pair1);
+			this.sendTreasure(msg.getSender());
+			if(parts.length>1) {
+				this.siloPosition = parts[1];
+				this.siloPositionOutdated = false;
+				this.lastSeenSilo = LocalTime.now().toNanoOfDay();;
+			}
 		}
 		else if(parts[0].contains("PING")) {
 			this.actualProtocol = "MapExchange";
@@ -873,7 +905,12 @@ public class FSMAgentData {
 				}
 			}
 			if(alreadyTold || alreadyInComm) {
-				this.sendMessage("MapExchange ACK", msg.getSender());
+				if(this.myAgent.getName().contains("Tanker")) {
+					this.sendMessage("MapExchange ACK "+this.myAgent.getCurrentPosition(), msg.getSender());
+				}else {
+					this.sendMessage("MapExchange ACK", msg.getSender());
+				}
+				
 			}
 			else {
 				this.inCommsWith.add(new AbstractMap.SimpleEntry<AID,String>(msg.getSender(),"MapExchange"));
@@ -902,7 +939,11 @@ public class FSMAgentData {
 			else {
 				if(this.verboseMapExchange)
 					System.out.println(this.myAgent.getName()+" : " +"Rien a envoyer");
-				this.sendMessage("MapExchange ACK", msg.getSender());
+				if(this.myAgent.getName().contains("Tanker")) {
+					this.sendMessage("MapExchange ACK "+this.myAgent.getCurrentPosition(), msg.getSender());
+				}else {
+					this.sendMessage("MapExchange ACK", msg.getSender());
+				}
 				this.actualProtocol = "";
 			}
 			
@@ -1069,7 +1110,11 @@ public class FSMAgentData {
 				this.addEdge(e[0],e[1]);
 				
 			}
-			this.sendMessage("MapExchange ACK", msg.getSender());
+			if(this.myAgent.getName().contains("Tanker")) {
+				this.sendMessage("MapExchange ACK "+this.myAgent.getCurrentPosition(), msg.getSender());
+			}else {
+				this.sendMessage("MapExchange ACK", msg.getSender());
+			}
 			if(this.type=="explore") {
 				this.destination = this.findDestination();
 			}
@@ -1272,6 +1317,17 @@ public class FSMAgentData {
 			this.lastSeenSilo =  LocalTime.now().toNanoOfDay();
 			this.siloPositionOutdated = false;
 			this.lookingForSilo = false;
+			this.sendTreasure(msg.getSender());
+			if(this.objective == "WaitingForOrder") {
+				if(this.verboseOrder)
+					System.out.println(this.myAgent.getName()+ " : Sending Silo AVAILABLE########################################" );
+				String contenu = "SILO AVAILABLE "+this.type+" "+Integer.toString(this.lockpickStrength)+" "+Integer.toString(this.strength);
+				contenu += " "+Integer.toString(this.goldCap)+" "+Integer.toString(this.diamondCap);
+				this.sendMessage(contenu,msg.getSender());
+			}else if(this.objective == "vidage") {
+				this.sendMessage("SILO EMPTYING",msg.getSender());
+				
+			}
 		}else if(parts[0].contains("MAYBE")){
 			if(Long.parseLong(parts[3])>this.lastSeenSilo || this.siloPositionOutdated) {
 				this.siloPosition = parts[1];
@@ -1291,6 +1347,8 @@ public class FSMAgentData {
 				System.out.println(this.myAgent.getName()+" : Going back to :"+this.objective);
 			}
 		}else if(parts[0].contains("AVAILABLE") && this.type.equals("Silo")){
+
+			this.list_order.updateOrderList(this.treasure);
 			String type = parts[1];
 			int loStr = Integer.parseInt(parts[2]);
 			int sStr = Integer.parseInt(parts[3]);
@@ -1300,7 +1358,10 @@ public class FSMAgentData {
 			if(order == "") {
 				this.sendMessage("ORDER NOTHING", msg.getSender());
 			}else {
-				this.sendMessage(this.list_order.agentGetAffectationOrder(msg.getSender(), type, loStr, sStr, gSize, dSize),msg.getSender());
+				if(this.verboseOrder) {
+					System.out.println(this.myAgent.getName()+" : Order delivered : -"+order+"-");
+				}
+				this.sendMessage(order,msg.getSender());
 			}
 		}
 	}
@@ -1315,8 +1376,13 @@ public class FSMAgentData {
 					return "explore";
 				}
 			}
-		}else {
+		}else if(this.type == "Explo"){
+			if(this.exploFinished) {
+				return "RetourSilo";
+			}
 			return "explore";//TODO Ajouter la séléction d'objectif pour les types explorateurs
+		}else {
+			return "explore";
 		}
 	}
 
@@ -1344,6 +1410,9 @@ public class FSMAgentData {
 		String[] parts = content.split("\\s+");
 		boolean notUpToDate = false;
 		for(int i = 0 ; i < parts.length ; i++) {
+			if(this.verboseTreasureExchange) {
+				System.out.println(this.myAgent.getName()+" : Treasure received : "+ parts);
+			}
 			String tresor = parts[i].substring(1, parts[i].length()-1);
 			String[] valeurs = tresor.split(",");
 			String pos = valeurs[0];
@@ -1357,6 +1426,7 @@ public class FSMAgentData {
 				notUpToDate = false;
 			}
 		}
+		this.list_order.updateOrderList(this.treasure);
 		if(notUpToDate) {
 			this.sendTreasure(msg2.getSender());
 		}
@@ -1375,6 +1445,11 @@ public class FSMAgentData {
 			this.order_lstrneeded = Integer.parseInt(parts[3]);
 			this.order_strneeded = Integer.parseInt(parts[4]);
 			this.order_startOnArrival = Boolean.parseBoolean(parts[5]);
+			if(parts[6].equals("Gold")) {
+				this.order_chestType = Observation.GOLD;
+			}else {
+				this.order_chestType = Observation.DIAMOND;
+			}
 		}else if(parts[0].equals("EMPTY")) {
 			this.objective = "Empty";
 			this.destination = parts[1];
@@ -1398,7 +1473,21 @@ public class FSMAgentData {
 		}
 	}
 
-	
+
+	private void treatMessageForOrderComplete(ACLMessage msg2) {
+		if(this.myAgent.getName().contains("Tanker")) {
+			String content =msg.getContent().substring(msg.getContent().indexOf(' ') + 1);
+			String[] parts =content.split(" ");
+			String type = parts[0];
+			String pos = parts[1];
+			if(this.type.equals("UNLOCK")) {
+				
+			}else if(this.type.equals("EMPTY")) {
+				int val = Integer.parseInt(parts[2]);
+			}
+		}
+		
+	}
 	public void getMessage() {
 		this.cleanOpenNodes();
 		this.cleanEdges();
@@ -1418,7 +1507,7 @@ public class FSMAgentData {
 		}
 		this.msg = m;
 
-		while (this.msg != null) {	
+		while (this.msg != null &&this.msg.getContent() != null) {	
 			if(this.verboseMessage==true)
 				System.out.println(this.myAgent.getName()+" : " +m.getContent() + " Message received");
 			if(this.verboseMessage==true)
@@ -1443,12 +1532,15 @@ public class FSMAgentData {
 				this.treatMessageForOrder(this.msg);
 			}else if(parts[0].equals("ARRIVED_FOR_ORDER")) {
 				this.treatMessageForOrderCompletion(this.msg);
+			}else if(parts[0].equals("ORDER_COMPLETE")) {
+				this.treatMessageForOrderComplete(this.msg);
 			}
 			//Map exchange protocolanObject
 			
 			this.msg = this.myAgent.receive(msgTemplate);
 		}
 	}
+
 	public void setMsg(ACLMessage m) {
 		this.msg = m;
 	}
@@ -1472,6 +1564,17 @@ public class FSMAgentData {
 	
 	public void arrivedAtOrderDestination() {
 		this.sendMessage("ARRIVED_FOR_ORDER "+this.destination+ " "+ Boolean.toString(this.order_startOnArrival)+" "+this.myAgent.getAID().toString(),false, "");
+		if(this.order_startOnArrival && this.order_agentnumber == 0) {
+			if(this.objective == "UNLOCK") {
+				this.myAgent.openLock(this.order_chestType);
+				this.messageForSilo = "ORDER_COMPLETE UNLOCK "+this.destination;
+				this.objective = "RetourSilo";
+			}else if(this.objective == "EMPTY") {
+				this.myAgent.pick();
+				this.messageForSilo = "ORDER_COMPLETE EMPTY "+this.destination + this.initBackPackSize;
+				this.objective = "RetourSilo";
+			}
+		}
 	}
 	//Interblock
 	public boolean detectIfStuck() {
@@ -1479,7 +1582,7 @@ public class FSMAgentData {
 		if(this.myAgent.getCurrentPosition() == this.previousPosition && this.actualProtocol.equals("")) {
 			this.stuckCounter+=1;
 			System.out.println(this.myAgent.getName()+" : " +"Stuck counter : "+Integer.toString(this.stuckCounter));
-			if(this.executingOrder && this.order_agentnumber+1<= this.myMap.getShortestPath(this.myAgent.getCurrentPosition(), this.destination).size()) {
+			if(this.executingOrder && this.order_agentnumber<= this.myMap.getShortestPath(this.myAgent.getCurrentPosition(), this.destination).size()) {
 				this.arrivedAtOrderDestination();
 			}
 			else if(this.stuckCounter > this.stuckTreshold) {
@@ -1607,12 +1710,14 @@ public class FSMAgentData {
 			String noeudEvitement="";
 			String[] ch = this.allyPath.clone();
 			List<String> c = Arrays.asList(ch);
-			c.remove(0);
+			if(ch.length>1) {
+				c.remove(0);
+			}
 			ch = (String[]) c.toArray();
 			int dist = 0;
 			boolean isThereNodeNotInPath= false;
 			String noeudActu="";
-			while(isThereNodeNotInPath == false) {
+			while(isThereNodeNotInPath == false ||ch.length > 0) {
 				noeudActu = ch[0];
 				dist+=1;
 				for(int j = 0 ; j < neigh.length ; j++) {
@@ -1640,7 +1745,7 @@ public class FSMAgentData {
 			int dist1 = 0;
 			String noeudActu1="";
 			boolean isThereNodeNotInPath1= false;
-			while(isThereNodeNotInPath1 == false) {
+			while(isThereNodeNotInPath1 == false||ch1.length > 0) {
 				noeudActu1 = ch1[0];
 				dist1+=1;
 				for(int j = 0 ; j < neigh1.length ; j++) {
@@ -1657,6 +1762,9 @@ public class FSMAgentData {
 			}
 			if(noeudEvitement1.equals("")) {
 				dist1 = 100000;
+			}
+			if(dist == dist1) {
+				//TODO Si les deux n'ont pas de noeud a aller pour debloquer la situation
 			}
 			if(dist <= dist1) {
 				//Moi qui bouge
@@ -1680,7 +1788,6 @@ public class FSMAgentData {
 			System.out.println(this.myAgent.getName()+" : My comms");
 			for( int j = 0 ; j < this.inCommsWith.size() ; j++) {
 				System.out.println("Comms for "+this.inCommsWith.get(j).getValue()+" with "+this.inCommsWith.get(j).getKey());
-				
 			}
 		}
 		if(this.verboseEtatAgent && this.type != "Silo") {
@@ -1747,7 +1854,7 @@ public class FSMAgentData {
 				System.out.println(this.myAgent.getName()+" : In commsWith empty? :"+Boolean.toString(this.inCommsWith.isEmpty()));
 			}
 			this.getMessage();
-		}else if(this.type == "Silo"){//Gestion déplacement du silo
+		}else if(this.type == "Silo"){//Gestion déplacement du silo FIXME crash le logiciel
 			if(this.verbose)
 				System.out.println("Test");
 			this.siloPositionSet+=1;
@@ -1770,23 +1877,28 @@ public class FSMAgentData {
 				}else {
 					String newPos = this.findDestination();
 					String myPos = this.myAgent.getCurrentPosition();
-					int newScore = this.determinePositionScore(newPos);
-					int oldScore = this.determinePositionScore(myPos);
-					if(this.verboseMovement)
-						System.out.println(this.myAgent.getName()+" : Movement Repositioning : Last Score of : "+myPos+" : "+Integer.toString(oldScore));System.out.println(this.myAgent.getName()+" : Movement Repositioning : Score of : "+newPos+" : "+Integer.toString(newScore));
-					if(newPos != "" && !this.destination.equals(myPos) && newScore>oldScore) {//TODO ne pas oublier de changer le sens de < a >
-						this.destination = newPos;
-						this.objective = "Repositioning";
-						if(this.verboseMovement)
-							System.out.println(this.myAgent.getName()+" : Movement Repositioning");
-					}else {
+					if(newPos != "") {
+						int newScore = this.determinePositionScore(newPos);
+						int oldScore = this.determinePositionScore(myPos);
+						if(newPos != "" && !this.destination.equals(myPos) && newScore>oldScore) {//TODO ne pas oublier de changer le sens de < a >
+							this.destination = newPos;
+							this.objective = "Repositioning";
+							if(this.verboseMovement) {
+								System.out.println(this.myAgent.getName()+" : Movement Repositioning");
+								System.out.println(this.myAgent.getName()+" : Movement Repositioning : Last Score of : "+myPos+" : "+Integer.toString(oldScore));
+								System.out.println(this.myAgent.getName()+" : Movement Repositioning : Score of : "+newPos+" : "+Integer.toString(newScore));
+							}
+						}
+					}
+					else {
 						this.siloPositionSet = 0;
 					}
+					
 				}
 			}
 		}else {
 			String nextNode=null;
-			if(this.destination == "" || this.destination == this.myAgent.getCurrentPosition()) {
+			if((this.destination == "" || this.destination.equals(this.myAgent.getCurrentPosition()))) {
 				if(this.verboseMovement) 
 					System.out.println(this.myAgent.getName()+" : " +"Searching for new destination");
 				this.destination = this.findDestination();
@@ -1802,10 +1914,9 @@ public class FSMAgentData {
 					System.out.println(this.myAgent.getName()+" : Movement Neighbour");
 				nextNode = this.destination;
 			}else {
+				int n = 1;
 				while (nextNode==null || nextNode.equals(this.myAgent.getCurrentPosition())){
-					System.out.println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 					nextNode=this.myMap.getShortestPath(this.myAgent.getCurrentPosition(), this.destination).get(0);
-					int n = 1;
 					if(this.myAgent.getCurrentPosition().equals(nextNode)) {
 						nextNode=this.myMap.getShortestPath(this.myAgent.getCurrentPosition(), this.destination).get(n);
 						n+=1;
@@ -1813,7 +1924,7 @@ public class FSMAgentData {
 				}
 			}
 			if(this.verboseEtatAgent && this.type != "Silo") {
-				System.out.println(this.myAgent.getName()+" : " +"Pre deplacemennt recap");
+				System.out.println(this.myAgent.getName()+" : " +"Pre Pre deplacemennt recap");
 				System.out.println(this.myAgent.getName()+" : " +"Agent : "+this.myAgent.getName());
 				System.out.println(this.myAgent.getName()+" : " +"Position : " + this.myAgent.getCurrentPosition());
 				System.out.println(this.myAgent.getName()+" : " +"Destination : " + this.destination);
@@ -1899,7 +2010,7 @@ public class FSMAgentData {
 				System.out.println(this.myAgent.getName()+" : " +"Swapping to Collect");
 			return 3;
 		
-		}else if(this.objective == "vidage" ||this.objective == "RetourSilo") {
+		}else if(this.objective == "vidage" ||this.objective == "RetourSilo"||this.objective == "WaitingForOrder") {
 			if(this.verboseFSMBehaviour)
 				System.out.println(this.myAgent.getName()+" : " +"Swapping to Retour Silo");
 			return 5;
@@ -1934,14 +2045,9 @@ public class FSMAgentData {
 		this.sendMessage("SILO ?",false,"");
 	}
 	public int determinePositionScore(String noeud) {
-		System.out.println("Neighb");
-		System.out.println(this.closedNodes.size());
-		System.out.println(this.openNodes.size());
 		this.cleanEdges();
 		this.cleanOpenNodes();
 		this.cleanClosedNodes();
-		System.out.println(this.closedNodes.size());
-		System.out.println(this.openNodes.size());
 		//renvoi un score en fonction de l'arité du noeud et de la centralité du noeud par rapport au trésor
 		int score = 0;
 		if(this.getNeighbour(noeud).size()>=3) {
@@ -1960,6 +2066,10 @@ public class FSMAgentData {
 			}
 		}
 		score += 10-(distMax-distMin);
+		this.observation();
+		if(this.treasureNear) {
+			score -= 10;
+		}
 		return score;
 		
 	}

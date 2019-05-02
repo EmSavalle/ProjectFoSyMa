@@ -317,11 +317,11 @@ public class Principal {
 		 * AGENT Explo1
 		 *********/
 		//1) Get the container where the agent will appear//
-		c = containerList.get(ConfigurationFile.LOCAL_CONTAINER2_NAME);
+		/*c = containerList.get(ConfigurationFile.LOCAL_CONTAINER2_NAME);
 		Assert.assertNotNull("This container does not exist",c);
 		
 		//2) Give the name of your agent, MUST be the same as the one given in the entities file.
-		agentName="Collect1";
+		agentName="Explo1";
 		
 		//3) If you want to give specific parameters to your agent, add them here
 		Object [] entityParameters2= {"My param"};//{"Collect","Gold"};
@@ -330,7 +330,7 @@ public class Principal {
 		ag=createNewDedaleAgent(c, agentName, FSMAgent.class.getName(), entityParameters2);
 		//ag=createNewDedaleAgent(c, agentName, ExploreSoloAgent.class.getName(), entityParameters2);
 		agentList.add(ag);
-		
+		*/
 		/*********
 		 * AGENT Silo
 		 *********/

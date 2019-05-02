@@ -28,18 +28,43 @@ import jade.lang.acl.MessageTemplate;
 public class Order {
 	public ArrayList<AID> agentDeploye;
 	public Treasure treasure;
-	public int lockStrNeeded;
-	public int strNeeded;
+	public int lockStrAllocate;
+	public int strAllocate;
 	public int valueToPick;
 	public boolean openingStarted;
 	public boolean emptyingStarted;
-	
+	public boolean verboseOrder = true;
+	public boolean orderComplete;
 	public Order(Treasure t) {
 		this.agentDeploye = new ArrayList<AID>();
 		this.treasure = t;
-		this.lockStrNeeded = t.lockStr;
-		this.strNeeded = t.str;
-		this.valueToPick = t.value;
+		this.lockStrAllocate = 0;
+		this.strAllocate = 0;
+		this.valueToPick = t.getValue();
+		this.orderComplete = false;
+		if(this.verboseOrder) {
+			System.out.println("###########################################\nNew Order : "+t.toString());
+		}
+	}
+	public void orderDone(String type) {
+		if(type.equals("UNLOCK")) {
+			this.treasure.setOpen();
+			this.agentDeploye.clear();
+			this.openingStarted = false;
+		}
+	}
+	public void orderDone(String type, int val, AID ai) {
+		if(type.equals("EMPTY")) {
+			this.treasure.reduceValue(val);
+			if(this.treasure.value <=0) {
+				this.orderComplete = true;
+				this.agentDeploye.clear();
+			}else {
+				this.agentDeploye.remove(ai);
+			}
+			
+		}
+		
 	}
 	public void setOpened() {
 		this.treasure.setOpen();
@@ -59,9 +84,9 @@ public class Order {
 	public Couple<Boolean,String> sendAgentOpening(AID agent,int lockStr,int str) {
 		this.openingStarted = true;
 		this.agentDeploye.add(agent);
-		this.lockStrNeeded = Math.min(this.lockStrNeeded - lockStr,0);
-		this.strNeeded = Math.min(this.strNeeded - str,0);
-		if(this.lockStrNeeded == 0 && this.strNeeded == 0) {
+		this.lockStrAllocate += lockStr;
+		this.strAllocate +=  str;
+		if(this.lockStrAllocate >= this.treasure.lockStr && this.strAllocate >=this.treasure.str) {
 			return new Couple<Boolean,String>(true,this.orderMessage("Open",true));
 		}
 		return new Couple<Boolean,String>(false,this.orderMessage("Open",false));	
@@ -82,13 +107,13 @@ public class Order {
 	}
 	
 	public boolean needAgentForOpening() {
-		if(this.lockStrNeeded == 0 && this.strNeeded == 0) {
+		if(this.lockStrAllocate >= this.treasure.lockStr && this.strAllocate >=this.treasure.str) {
 			return false;
 		}
 		return true;
 	}
 	public Couple<Integer,Integer> whatIsNeeded(){
-		return new Couple<Integer,Integer>(this.lockStrNeeded,this.strNeeded);
+		return new Couple<Integer,Integer>(Math.min(0,this.treasure.lockStr-this.lockStrAllocate),Math.min(0,this.treasure.str-this.strAllocate));
 	}
 	public String orderMessage(String typeOrder,boolean end) {
 		//ORDER UNLOCK pos need_other alone lstr str
@@ -96,23 +121,27 @@ public class Order {
 		if(typeOrder.equals("Open")) {
 			order  = "ORDER UNLOCK "+this.treasure.position+" ";
 			order+= Integer.toString(this.agentDeploye.size()-1)+" ";
-			if(this.lockStrNeeded == 0 && this.strNeeded == 0) {
+			if(Math.min(0,this.treasure.lockStr-this.lockStrAllocate) == 0 && Math.min(0,this.treasure.str-this.strAllocate) == 0) {
 				order+= "0 ";
 			}else {
 				order+= "1 ";
 			}
-			order+=Integer.toString(this.lockStrNeeded)+" "+Integer.toString(this.strNeeded)+" "+ Boolean.toString(end);
+			order+=Integer.toString(Math.min(0,this.treasure.lockStr-this.lockStrAllocate))+" "+Integer.toString(Math.min(0,this.treasure.str-this.strAllocate))+" "+ Boolean.toString(end);
+			order+=" "+this.treasure.getType();
 		}else if(typeOrder.equals("Empty")) {
 			order  = "ORDER EMPTY "+this.treasure.position +" "+ Boolean.toString(end);
 		}
 		return order;
 	}
 	public boolean isHeUsefull(int lStr, int sStr) {
-		if(lStr > 0 && this.lockStrNeeded > 0)
-			return true;
-		if(sStr > 0 && this.strNeeded > 0)
-			return true;
+		if(!this.treasure.getOpen()) {
+			if(lStr > 0 && this.lockStrAllocate < this.treasure.lockStr)
+				return true;
+			if(sStr > 0 &&  this.strAllocate < this.treasure.lockStr)
+				return true;
+		}
 		return false;
+		
 	}
 	public boolean isHeUsefull(int lStr, int sStr,int gSize, int dSize) {
 		if(this.isOpen() && this.treasure.getValue()>0) {
@@ -121,9 +150,9 @@ public class Order {
 			if(this.treasure.getType() == "Diamond" && dSize != 0)
 				return true;
 		}
-		if(lStr > 0 && this.lockStrNeeded > 0)
+		if(lStr > 0 && this.lockStrAllocate < this.treasure.lockStr)
 			return true;
-		if(sStr > 0 && this.strNeeded > 0)
+		if(sStr > 0 &&  this.strAllocate < this.treasure.lockStr)
 			return true;
 		return false;
 	}

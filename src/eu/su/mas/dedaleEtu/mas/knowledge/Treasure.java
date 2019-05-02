@@ -31,6 +31,9 @@ public class Treasure {
 		this.lockStr = lockStr;
 		this.str = str;
 	}
+	public String toString() {
+		return "Tresor : "+this.position+"/"+this.type+"/"+this.value+"/"+Boolean.toString(this.isOpen)+"/"+Integer.toString(this.lockStr)+"/"+Integer.toString(this.str);
+	}
 	public Observation getOType() {return this.oType;}
 	public String getPosition() {return this.position;}
 	public String getType() {return this.type;}

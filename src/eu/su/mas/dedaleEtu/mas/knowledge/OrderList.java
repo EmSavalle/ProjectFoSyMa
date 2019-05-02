@@ -27,12 +27,13 @@ import jade.lang.acl.MessageTemplate;
 
 public class OrderList {
 	public ArrayList<Order> list_ordre;
+	public boolean verboseOrder = true;
 	public OrderList() {
 		this.list_ordre = new ArrayList<Order>();
 	}
 	public void initialiseOrder(ArrayList<Treasure> lT) {
-		//Verifie que la liste des ordres contient tous les trésor
-		//Si non, ajoute les trésors a des ordres
+		//Verifie que la liste des ordres contient tous les trï¿½sor
+		//Si non, ajoute les trï¿½sors a des ordres
 		for (int i = 0 ; i < lT.size() ; i ++) {
 			boolean init = false;
 			for (int j = 0 ; j < this.list_ordre.size() ; j++) {
@@ -62,12 +63,41 @@ public class OrderList {
 			}
 		}
 	}
+	public void updateOrderList(ArrayList<Treasure> treasure) {
+		if(treasure.size()==this.list_ordre.size())
+			return;
+		for (int i = 0; i < treasure.size() ; i++) {
+			boolean set = false;
+			for (int j = 0 ; j < this.list_ordre.size() ; j++) {
+				if(treasure.get(i).getPosition().equals(this.list_ordre.get(j).treasure.getPosition())) {
+					set = true;
+				}
+			}
+			if(set == false) {
+				this.list_ordre.add(new Order(treasure.get(i)));
+			}
+		}
+	}
 	public String agentGetAffectationOrder(AID agentToAffect, String type, int lStr, int sStr , int gSize, int dSize) {
 		int iOrder = -1;
+		if(this.verboseOrder) {
+			System.out.println("Determine l'ordre d'affectation");
+			System.out.println("Nombre ordre dispo : "+Integer.toString(this.list_ordre.size()));
+		}
+		if(this.verboseOrder && this.list_ordre.size() == 0)
+			System.out.println("Determine l'ordre d'affectation : pas d'ordre disponible pour affectation");
 		if(type.equals("Explo")) {
 			boolean isOrderStarted = false;
 			for(int i = 0 ; i < this.list_ordre.size() ; i++) {
-				if(!this.list_ordre.get(i).isOpen() && this.list_ordre.get(i).isHeUsefull(lStr, sStr) == true) {
+				if(this.verboseOrder) {
+					System.out.println("TrÃ©sor analysÃ© : "+this.list_ordre.get(i).treasure.toString());
+					System.out.println("affectation : Ouvert ? "+Boolean.toString(this.list_ordre.get(i).isOpen()));
+					System.out.println("affectation : Ouvert ? "+Boolean.toString(this.list_ordre.get(i).treasure.isOpen));
+					System.out.println("affectation : loStr needed ? "+Integer.toString(this.list_ordre.get(i).treasure.getLockStrength() - this.list_ordre.get(i).lockStrAllocate));
+					System.out.println("affectation : Str needed ? "+Integer.toString(this.list_ordre.get(i).treasure.getStrength() - this.list_ordre.get(i).strAllocate));
+					System.out.println("affectation : Usefull ? "+Boolean.toString(this.list_ordre.get(i).isHeUsefull(lStr, sStr)));
+				}
+				if(!this.list_ordre.get(i).isOpen() && this.list_ordre.get(i).isHeUsefull(lStr, sStr)) {
 					if(this.list_ordre.get(i).openingStarted) {
 						iOrder = i;
 						isOrderStarted = true;
@@ -78,12 +108,16 @@ public class OrderList {
 				}
 			}
 			if(iOrder == -1) {
+				if(this.verboseOrder)
+					System.out.println("Pas d'ordre d'affectation trouvÃ©");
 				return "";
 			}
 			Couple<Boolean,String> c = this.list_ordre.get(iOrder).sendAgentOpening(agentToAffect, lStr, sStr);
+			if(this.verboseOrder)
+				System.out.println("#########################\n AFFECTATION TROUVE : "+c.getRight());
 			return c.getRight();
 		}else{
-			//TODO verifier s'il est préférable d'envoyer un agent collect collecter ou ouvrir 
+			//TODO verifier s'il est prï¿½fï¿½rable d'envoyer un agent collect collecter ou ouvrir 
 			boolean isOrderStarted = false;
 			for(int i = 0 ; i < this.list_ordre.size() ; i++) {
 				if(!this.list_ordre.get(i).isHeUsefull(lStr, sStr, gSize, dSize)) {

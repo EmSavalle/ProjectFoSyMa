@@ -50,8 +50,11 @@ public class ExplorationBehaviour extends OneShotBehaviour {
 			//3) while openNodes is not empty, continues.
 			if (this.data.openNodes.isEmpty()){
 				//Explo finished
-				this.data.finished=true;
-				System.out.println("Exploration successufully done, behaviour removed.");
+				this.data.exploFinished=true;
+				if(this.data.objective == "explore") {
+					this.data.objective = "WaitingForOrder";
+				}
+				System.out.println(this.myAgent.getName()+"Exploration successufully done, behaviour removed.");
 			}else{
 				this.data.movement();
 			}
