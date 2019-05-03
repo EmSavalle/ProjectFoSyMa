@@ -26,10 +26,12 @@ public class ExecuteOrderBehaviour extends OneShotBehaviour {
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 		System.out.println(this.data.destination);
 		System.out.println(this.data.myAgent.getCurrentPosition());
+		System.out.println(this.data.objective);
+		System.out.println(this.data.executingOrder);
 		if(this.data.executingOrder && this.data.myAgent.getCurrentPosition().equals(this.data.destination)) {
 			this.data.arrivedAtOrderDestination();
 		}
-		else if(this.data.executingOrder && this.data.order_agentnumber+1> this.data.myMap.getShortestPath(this.data.myAgent.getCurrentPosition(), this.data.destination).size()) {
+		else if(this.data.executingOrder && this.data.order_agentnumber+1> this.data.myMap.getShortestPath(this.data.myAgent.getCurrentPosition(), this.data.destination).size()) {//FIXME
 			this.data.arrivedAtOrderDestination();
 		}
 		if (myPosition!=null){

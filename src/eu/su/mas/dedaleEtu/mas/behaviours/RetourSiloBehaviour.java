@@ -58,10 +58,9 @@ public class RetourSiloBehaviour extends OneShotBehaviour {
 					}
 					this.cptWaitingSilo+=1;
 					//TODO Se mettre en attente
-				}else {
-					//TODO gerer que faire si on est loin du silo et qu'on ne sais pas ou il est
+				}else if(this.data.objective!="Unlock" && this.data.objective!="Empty"){
+					this.data.destination=this.data.siloPosition;
 				}
-				this.data.destination=this.data.siloPosition;
 				this.data.movement();
 			}
 		}
