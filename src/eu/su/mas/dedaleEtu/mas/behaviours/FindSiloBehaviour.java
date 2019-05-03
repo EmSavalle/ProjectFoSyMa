@@ -32,7 +32,7 @@ public class FindSiloBehaviour extends OneShotBehaviour {
 			this.data.observation();
 			if(this.data.lookingForSilo) {
 				
-				
+				System.out.println("Bla--------------------------------------------------------------------\n");
 				this.data.askForSilo();
 			}
 

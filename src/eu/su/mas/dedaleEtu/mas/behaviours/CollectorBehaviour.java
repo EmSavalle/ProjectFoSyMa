@@ -62,11 +62,8 @@ public class CollectorBehaviour extends OneShotBehaviour {
 
 				if(this.data.getNbTreasureAccessible(this.data.lockpickStrength,this.data.strength)!= 0) {
 					this.data.setDestination(this.data.getPositionBestTreasureForMe(myPosition, this.data.myBackpackSize, 1));
-				}else if(this.data.myBackpackSize == 0) {
-					if(this.data.siloPosition == "") {
-						//TODO Find silo
-					}
-					this.data.setDestination(this.data.siloPosition);
+				}else if(this.data.getNbTreasureAccessible(this.data.lockpickStrength,this.data.strength) == 0 && this.data.openNodes.isEmpty()) {
+					this.data.objective = "WaitingForOrder";
 				}
 				else {
 					int iMin=-1;

@@ -1,5 +1,7 @@
 package eu.su.mas.dedaleEtu.mas.knowledge;
 
+import java.time.LocalTime;
+
 import eu.su.mas.dedale.env.Observation;
 
 public class Treasure {
@@ -18,6 +20,12 @@ public class Treasure {
 		this.lastSeen = time;
 		this.type = t;
 		this.value = v;
+		if(t=="Gold") {
+			this.oType = Observation.GOLD;
+		}
+		if(t=="Diamond") {
+			this.oType = Observation.DIAMOND;
+		}
 		if(open == 1) {
 			this.isOpen = true;
 		}else {
@@ -34,6 +42,7 @@ public class Treasure {
 	public String toString() {
 		return "Tresor : "+this.position+"/"+this.type+"/"+this.value+"/"+Boolean.toString(this.isOpen)+"/"+Integer.toString(this.lockStr)+"/"+Integer.toString(this.str);
 	}
+	public void updateDate() {this.lastSeen=LocalTime.now().toNanoOfDay();}
 	public Observation getOType() {return this.oType;}
 	public String getPosition() {return this.position;}
 	public String getType() {return this.type;}
@@ -74,7 +83,8 @@ public class Treasure {
 			return true;
 		}else {
 			this.value = this.value-v;
-			if(v == 0) {
+			if(this.value <= 0) {
+				this.value = 0;
 				this.isEmpty = true;
 			}else {
 				this.isEmpty = false;

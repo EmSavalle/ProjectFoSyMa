@@ -13,12 +13,12 @@ public class RetourSiloBehaviour extends OneShotBehaviour {
 	private boolean verbose;
 	//Compteur de tour passé
 	public FSMAgentData data;
-
+	public int cptWaitingSilo;
 	public RetourSiloBehaviour(final AbstractDedaleAgent myagent, FSMAgentData data) {
 		super(myagent);
-		this.verbose = false;
+		this.verbose = true;
 		this.data = data;
-		
+		this.cptWaitingSilo = 0;
 	}
 	//TODO le robot s'arrète a 2 cases du tanker au lieu d'une seule
 	@Override
@@ -32,21 +32,31 @@ public class RetourSiloBehaviour extends OneShotBehaviour {
 				this.data.siloPositionOutdated = true;
 				this.data.lookingForSilo = true;
 				this.data.stuckCounter = 0;
-			}else {
+			}else if(!this.data.executingOrder){
 				if(this.verbose) {
 					System.out.println(this.myAgent.getName()+ ": RetourSiloBehaviour Shortest path "+this.data.siloPosition);
 				}
-				if(this.data.myMap.getShortestPath(myPosition, this.data.siloPosition).size() <= 2) {
+				if(this.data.myMap.getShortestPath(myPosition, this.data.siloPosition).size() <= 2  ) {
 					
-					if(this.data.siloAID != null) {
-						if(this.data.messageForSilo != "") 
-							this.data.sendMessage(this.data.messageForSilo, this.data.siloAID);
-						this.data.sendMessage("SILO ?", this.data.siloAID);
-					}else {
-						if(this.data.messageForSilo != "") 
-							this.data.sendMessage(this.data.messageForSilo, false,"");
-						this.data.sendMessage("SILO ?",false,"");
+					if(this.cptWaitingSilo == 0) {
+						if(this.data.siloAID != null) {
+							if(this.data.messageForSilo != "") {
+								System.out.println(this.myAgent.getName()+ ": Sending message to silo for ending order");
+								this.data.sendMessage(this.data.messageForSilo, this.data.siloAID);}
+							System.out.println("hrwefrtserthrhegrgree");
+							this.data.sendMessage("SILO ?", this.data.siloAID);
+						}else {
+							if(this.data.messageForSilo != "") {
+								System.out.println(this.myAgent.getName()+ ": Sending message to silo for ending order");
+								this.data.sendMessage(this.data.messageForSilo, false,"");}
+							this.data.sendMessage("SILO ?",false,"");
+						}
+					}else if(this.cptWaitingSilo > 10) {
+						this.data.siloPositionOutdated = true;
+						this.data.siloPosition = "";
+						this.cptWaitingSilo=0;
 					}
+					this.cptWaitingSilo+=1;
 					//TODO Se mettre en attente
 				}else {
 					//TODO gerer que faire si on est loin du silo et qu'on ne sais pas ou il est
