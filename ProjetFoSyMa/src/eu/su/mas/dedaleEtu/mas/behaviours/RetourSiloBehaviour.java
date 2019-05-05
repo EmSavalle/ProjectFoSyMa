@@ -33,18 +33,20 @@ public class RetourSiloBehaviour extends OneShotBehaviour {
 				this.data.siloPositionOutdated = true;
 				this.data.lookingForSilo = true;
 				this.data.stuckCounter = 0;
+				this.cptWaitingSilo=0;
 			}else if(!this.data.executingOrder){
 				if(this.verbose) {
 					System.out.println(this.myAgent.getName()+ ": RetourSiloBehaviour Shortest path "+this.data.siloPosition);
 				}
 				if(this.data.myMap.getShortestPath(myPosition, this.data.siloPosition).size() <= 2  ) {
+					System.out.println(this.myAgent.getName()+ ": Near silo for retour");
 					
 					if(this.cptWaitingSilo == 0) {
+						System.out.println(this.myAgent.getName()+ ": Retour Silo sending message for order's end");
 						if(this.data.siloAID != null) {
 							if(this.data.messageForSilo != "") {
 								System.out.println(this.myAgent.getName()+ ": Sending message to silo for ending order");
 								this.data.sendMessage(this.data.messageForSilo, this.data.siloAID);}
-							System.out.println("hrwefrtserthrhegrgree");
 							this.data.sendMessage("SILO ?", this.data.siloAID);
 						}else {
 							if(this.data.messageForSilo != "") {
@@ -61,6 +63,7 @@ public class RetourSiloBehaviour extends OneShotBehaviour {
 					//TODO Se mettre en attente
 				}else if(this.data.objective!="Unlock" && this.data.objective!="Empty"){
 					this.data.destination=this.data.siloPosition;
+					this.cptWaitingSilo=0;
 				}
 				this.data.movement();
 			}
