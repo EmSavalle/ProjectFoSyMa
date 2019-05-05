@@ -1,2 +1,5 @@
 mapname:mine
-gold:0:50:2:2
+gold:01:50:3:3
+gold:51:50:3:3
+diamonds:31:50:3:3
+diamonds:61:50:3:3

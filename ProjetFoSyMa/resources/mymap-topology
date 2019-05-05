@@ -12,7 +12,9 @@ an 8	label:8
 an 9	label:9
 an 10	label:10
 an 01	label:01
+an 21	label:21
 an 31	label:31
+an 51	label:51
 an 61	label:61
 an 91	label:91
 ae e1	0 1
@@ -31,3 +33,5 @@ ae e13	0 01
 ae e14	3 31
 ae e15	6 61
 ae e16	9 91
+ae e17	2 21
+ae e18	5 51

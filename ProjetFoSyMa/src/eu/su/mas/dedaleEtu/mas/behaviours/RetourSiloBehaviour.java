@@ -46,12 +46,14 @@ public class RetourSiloBehaviour extends OneShotBehaviour {
 						if(this.data.siloAID != null) {
 							if(this.data.messageForSilo != "") {
 								System.out.println(this.myAgent.getName()+ ": Sending message to silo for ending order");
-								this.data.sendMessage(this.data.messageForSilo, this.data.siloAID);}
+								this.data.sendMessage(this.data.messageForSilo, this.data.siloAID);
+								this.data.messageForSilo="";}
 							this.data.sendMessage("SILO ?", this.data.siloAID);
 						}else {
 							if(this.data.messageForSilo != "") {
 								System.out.println(this.myAgent.getName()+ ": Sending message to silo for ending order");
-								this.data.sendMessage(this.data.messageForSilo, false,"");}
+								this.data.sendMessage(this.data.messageForSilo, false,"");
+								this.data.messageForSilo="";}
 							this.data.sendMessage("SILO ?",false,"");
 						}
 					}else if(this.cptWaitingSilo > 10) {
