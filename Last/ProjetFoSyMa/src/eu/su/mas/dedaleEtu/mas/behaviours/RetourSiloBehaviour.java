@@ -38,7 +38,7 @@ public class RetourSiloBehaviour extends OneShotBehaviour {
 				if(this.verbose) {
 					System.out.println(this.myAgent.getName()+ ": RetourSiloBehaviour Shortest path "+this.data.siloPosition);
 				}
-				if(this.data.myMap.getShortestPath(myPosition, this.data.siloPosition).size() <= 2  ) {
+				if(this.data.myMap.getShortestPath(myPosition, this.data.siloPosition).size() <= 3  ) {
 					System.out.println(this.myAgent.getName()+ ": Near silo for retour");
 					
 					if(this.cptWaitingSilo == 0) {

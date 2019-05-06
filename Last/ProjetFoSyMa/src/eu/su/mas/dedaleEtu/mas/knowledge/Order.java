@@ -135,9 +135,9 @@ public class Order {
 	}
 	public boolean isHeUsefull(int lStr, int sStr) {
 		if(!this.treasure.getOpen()) {
-			if(lStr > 0 && this.lockStrAllocate < this.treasure.lockStr)
+			if(lStr >= 0 && this.lockStrAllocate <= this.treasure.lockStr)
 				return true;
-			if(sStr > 0 &&  this.strAllocate < this.treasure.lockStr)
+			if(sStr >= 0 &&  this.strAllocate <= this.treasure.lockStr)
 				return true;
 		}
 		return false;
@@ -150,9 +150,9 @@ public class Order {
 			if(this.treasure.getType() == "Diamond" && dSize != 0)
 				return true;
 		}
-		if(lStr > 0 && this.lockStrAllocate < this.treasure.lockStr)
+		if(lStr >= 0 && this.lockStrAllocate <= this.treasure.lockStr)
 			return true;
-		if(sStr > 0 &&  this.strAllocate < this.treasure.lockStr)
+		if(sStr >= 0 &&  this.strAllocate <= this.treasure.lockStr)
 			return true;
 		return false;
 	}

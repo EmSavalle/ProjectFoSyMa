@@ -476,7 +476,7 @@ public class FSMAgentData {
 			if(this.verboseMovement || this.verboseEtatAgent)
 				System.out.println(this.myAgent.getName()+" : " +"New dest find : "+this.openNodes.get(iMin));
 			return this.openNodes.get(iMin);
-		}else if(this.type.equals("Collect")) {
+		}/*else if(this.type.equals("Collect")) {
 			if(this.getNbTreasure()!=0 && this.actualProtocol =="") {
 				this.objective="collect";
 			}
@@ -484,7 +484,7 @@ public class FSMAgentData {
 				return this.getPositionBestTreasureForMe(this.myAgent.getCurrentPosition(), this.myBackpackSize, 1);
 			}
 			
-		}else if(this.objective.equals("silo")) {
+		}*/else if(this.objective.equals("silo")) {
 			int nb = this.getNbTreasure();
 			String dest ="";
 			if(nb!=0) {
@@ -708,7 +708,7 @@ public class FSMAgentData {
 		int lock = ((Couple<String,Integer>)a[0]).getRight();
 		int str = ((Couple<String,Integer>)a[1]).getRight();
 		
-		
+		/*
 		if(lockisopen == 0 && strength < str && lockpicking < lock) {
 			if(this.verboseEtudeTresor)
 				System.out.println(this.myAgent.getName()+" : " +"A ouvert un coffre");
@@ -732,7 +732,7 @@ public class FSMAgentData {
 			this.myAgent.pick();//TODO Finir fonction
 			if(this.verboseCollect)
 				System.out.println(this.myAgent.getName()+" : " +"Picked");
-		}
+		}*/
 		this.setTreasure(nodeId, type, size, LocalTime.now().toNanoOfDay(), lockisopen,lockpicking,strength);
 	}
 	public void sendTreasure() {
@@ -1309,11 +1309,11 @@ public class FSMAgentData {
 			String objAttr = parts[1].substring(1, parts[1].length()-1);
 			this.allyObjective = objAttr.split(",")[0];
 			if(this.allyObjective.equals("collect"))
-				this.allyAttributes = new Couple<String,Integer>(objAttr.split(" ")[1],Integer.parseInt(objAttr.split(" ")[2]));
+				this.allyAttributes = new Couple<String,Integer>(objAttr.split(",")[1],Integer.parseInt(objAttr.split(",")[2]));
 			else
 				this.allyAttributes = new Couple<String,Integer>("",0);
 			if(this.allyObjective.equals("collect")) {
-				this.allyVidage = Integer.parseInt(objAttr.split(" ")[3]);
+				this.allyVidage = Integer.parseInt(objAttr.split(",")[3]);
 			}
 			this.allyDestination = parts[2];
 			this.allyPath = parts[3].split("/");
@@ -1333,7 +1333,7 @@ public class FSMAgentData {
 			if(yName.contains("Tanker")){
 				onChange =true;
 			}
-			if(yName.contains("Collec") && !myName.contains("Collect")) {
+			if(yName.contains("Collect") && !myName.contains("Collect")) {
 				onChange = true;
 			}else if(yName.contains("Collect") && myName.contains("Collect") && myNb < yNb) {
 				onChange = true;
@@ -1587,7 +1587,9 @@ public class FSMAgentData {
 					this.objective = "RetourSilo";*/
 					this.arrivedAtOrderDestinationAtMsgReceived();
 				}
-			}
+			}/*else if(this.voisin.contains(this.destination) && Boolean.parseBoolean(parts[1]) && this.order_agentnumber==0) {
+				this.sendMessage("ORDER DOIT "+this.destination,msg2.getSender());
+			}*/
 		}
 	}
 	private void treatMessageForOrderComplete(ACLMessage msg2) {
@@ -1696,7 +1698,7 @@ public class FSMAgentData {
 			System.out.println(this.myAgent.getName()+" : Type : "+this.objective);
 			System.out.println(this.myAgent.getName()+" : Start on arrival : "+Boolean.toString(this.order_startOnArrival));
 		}
-		if(this.order_agentnumber == 0 && this.order_startOnArrival) {
+		if(this.order_agentnumber == 0 && (this.objective=="Empty" || this.order_startOnArrival))/*||(this.order_startOnArrival && this.myAgent.getCurrentPosition().equals(this.destination))*/ {
 			if(this.objective == "UNLOCK" ||this.objective == "Unlock") {
 				if(this.verboseOrder) {
 					System.out.println(this.myAgent.getName()+" : Opening lock @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
@@ -1810,6 +1812,8 @@ public class FSMAgentData {
 			this.stuckCounter+=1;
 			System.out.println(this.myAgent.getName()+" : " +"Stuck counter : "+Integer.toString(this.stuckCounter));
 			if(this.executingOrder && this.order_agentnumber>= this.myMap.getShortestPath(this.myAgent.getCurrentPosition(), this.destination).size()) {
+				this.arrivedAtOrderDestination();
+			}else if(this.executingOrder && this.order_agentnumber+1>= this.myMap.getShortestPath(this.myAgent.getCurrentPosition(), this.destination).size()) {
 				this.arrivedAtOrderDestination();
 			}
 			else if(this.stuckCounter > this.stuckTreshold && this.stuckSended == false) {
@@ -2097,7 +2101,7 @@ public class FSMAgentData {
 					}
 					((AbstractDedaleAgent)this.myAgent).moveTo(this.desiredPosition);
 				}
-				else {
+				else if(!(this.thanksAt!="" && this.myAgent.getCurrentPosition().equals(this.thanksAt))) {
 					this.desiredPosition = this.myMap.getShortestPath(this.myAgent.getCurrentPosition(), this.thanksAt).get(0);
 					int n = 1;
 					if(this.myAgent.getCurrentPosition().equals(this.desiredPosition )) {
@@ -2239,6 +2243,7 @@ public class FSMAgentData {
 					System.out.println(this.myAgent.getName()+" : " +"Searching for new destination");
 				this.destination = this.findDestination();
 				if(this.destination == "") {
+					this.objective = "WaitingForOrder";
 					if(this.verboseMovement) {
 						System.out.println(this.myAgent.getName()+" : " +"Nowhere to go");
 					}

@@ -120,7 +120,7 @@ public class OrderList {
 			//TODO verifier s'il est pr�f�rable d'envoyer un agent collect collecter ou ouvrir 
 			boolean isOrderStarted = false;
 			for(int i = 0 ; i < this.list_ordre.size() ; i++) {
-				if(!this.list_ordre.get(i).isHeUsefull(lStr, sStr, gSize, dSize)) {
+				if(this.list_ordre.get(i).isHeUsefull(lStr, sStr, gSize, dSize)) {
 					if(this.list_ordre.get(i).openingStarted ||this.list_ordre.get(i).emptyingStarted ) {
 						iOrder = i;
 						isOrderStarted = true;
