@@ -321,7 +321,7 @@ public class Principal {
 		Assert.assertNotNull("This container does not exist",c);
 		
 		//2) Give the name of your agent, MUST be the same as the one given in the entities file.
-		agentName="Explo1";
+		agentName="Collect1";
 		
 		//3) If you want to give specific parameters to your agent, add them here
 		Object [] entityParameters2= {"My param"};//{"Collect","Gold"};
@@ -338,7 +338,7 @@ public class Principal {
 		Assert.assertNotNull("This container does not exist",c);
 		
 		//2) Give the name of your agent, MUST be the same as the one given in the entities file.
-		agentName="Explo2";
+		agentName="Collect2";
 		
 		//3) If you want to give specific parameters to your agent, add them here
 		Object [] entityParameters3= {"My param"};//{"Collect","Gold"};

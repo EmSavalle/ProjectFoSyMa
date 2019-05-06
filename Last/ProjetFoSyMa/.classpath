@@ -22,6 +22,6 @@
 	<classpathentry kind="lib" path="libs/junit/junit-4.12-sources.jar"/>
 	<classpathentry kind="lib" path="libs/junit/junit-4.12.jar"/>
 	<classpathentry kind="lib" path="libs/tools/tools.jar"/>
-	<classpathentry kind="lib" path="/home/emile/Desktop/FoSyMa/ProjetFoSyMa/libs/dedale/dedale.jar"/>
+	<classpathentry kind="lib" path="/home/emile/Desktop/FoSyMa/Last/ProjetFoSyMa/libs/dedale/dedale.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

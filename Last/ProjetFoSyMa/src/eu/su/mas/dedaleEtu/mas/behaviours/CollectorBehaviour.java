@@ -60,9 +60,9 @@ public class CollectorBehaviour extends OneShotBehaviour {
 			this.data.observation();
 			if(this.data.destination == "") {	
 
-				if(this.data.getNbTreasureAccessible(this.data.lockpickStrength,this.data.strength)!= 0) {
+				/*if(this.data.getNbTreasureAccessible(this.data.lockpickStrength,this.data.strength)!= 0) {
 					this.data.setDestination(this.data.getPositionBestTreasureForMe(myPosition, this.data.myBackpackSize, 1));
-				}else if(this.data.getNbTreasureAccessible(this.data.lockpickStrength,this.data.strength) == 0 && this.data.openNodes.isEmpty()) {
+				}else */if(this.data.getNbTreasureAccessible(this.data.lockpickStrength,this.data.strength)!= 0 || (this.data.getNbTreasureAccessible(this.data.lockpickStrength,this.data.strength) == 0 && this.data.openNodes.isEmpty())) {
 					this.data.objective = "WaitingForOrder";
 				}
 				else {
@@ -89,6 +89,7 @@ public class CollectorBehaviour extends OneShotBehaviour {
 							if(this.data.treasure.get(i).canOpen(this.data.lockpickStrength, this.data.strength)) {
 								System.out.println(this.data.myAgent.getName() + " : Trying to open Result : "+Boolean.toString(((AbstractDedaleAgent) this.data.myAgent).openLock(this.data.treasure.get(i).getOType())));
 								open = true;
+								this.data.updateTreasure(this.data.myAgent.getCurrentPosition(),"OPEN");
 
 								if(this.data.verboseCollect) {
 									System.out.println(this.data.myAgent.getName() + " : Opened");
